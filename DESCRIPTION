@@ -1,0 +1,24 @@
+Package: HOQCwfs
+Title: Web Feature Service (WFS) read-only interface 
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Han",
+           family = "Oostdijk",
+           role = c("aut", "cre"),
+           email = "han@hanoostdijk.nl",
+           comment = c(ORCID = "0000-0001-6710-4566"))
+Description: R Function to access Web Feature Service functionality.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Suggests: 
+    testthat
+Imports: 
+    httr,
+    xml2,
+    purrr,
+    dplyr,
+    magrittr,
+    stringr
