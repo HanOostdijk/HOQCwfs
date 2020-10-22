@@ -4,7 +4,7 @@
 #' Retrieve the names of the features with spatial information from a GetCapabilities document
 #' @param xml_doc XML document with the output of a GetCapabilities document
 #' @param filternames Character string that filters the returned featurenames
-#' @return data.frame with name, default CRS, lower and upper corner (in WGS84 coordinates) for each filtered featuretype name
+#' @return tibble with name, default CRS, lower and upper corner (in WGS84 coordinates) for each filtered featuretype name
 #' @export
 #' @examples
 #' xml_cap1 <- WFS_getcapabilities()

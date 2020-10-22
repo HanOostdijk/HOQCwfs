@@ -15,10 +15,11 @@ WFS_getcapabilities(
 
 \item{version}{software version for WFS service request. See \code{\link[=WFS_get_version]{WFS_get_version()}} for the default}
 
-\item{out_path}{path where the xml result is to be saved}
+\item{out_path}{(optional) path where the xml result is to be saved}
 }
 \value{
 xml document with the \code{GetCapabilities} information for this WFS service
+or character string 'UNEXPECTED ERROR' when an error was encountered
 }
 \description{
 Retrieve the GetCapabilities document with request version \code{version} for WFS service \code{url}

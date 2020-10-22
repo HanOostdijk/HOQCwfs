@@ -12,7 +12,7 @@ WFS_featuretypes(xml_doc, filternames = NULL)
 \item{filternames}{Character string that filters the returned featurenames}
 }
 \value{
-data.frame with name, default CRS, lower and upper corner (in WGS84 coordinates) for each filtered featuretype name
+tibble with name, default CRS, lower and upper corner (in WGS84 coordinates) for each filtered featuretype name
 }
 \description{
 Retrieve the names of the features with spatial information from a GetCapabilities document

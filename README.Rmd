@@ -13,14 +13,16 @@ knitr::opts_chunk$set(
 )
 ```
 
-# HOQCwfs
+## HOQCwfs
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-R Web Feature Service (WFS) read-only interface
+### R Web Feature Service (WFS) read-only interface
+This package contains functions to retrieve information from a Web Feature Service (WFS) resource. 
+It generates HTML requests for the WFS API.
 
-## Installation
+### Installation
 
 You can install this version from [GitHub](https://github.com/) with:
 
@@ -29,11 +31,74 @@ You can install this version from [GitHub](https://github.com/) with:
 devtools::install_github("HanOostdijk/HOQCwfs")
 ```
 
-## Example
+### Example
 
-This is a basic example which shows you how to solve a common problem:
+A typical workflow looks like this :
 
-```{r example}
-## library(HOQCwfs)
-## basic example code
+#### Initialize
+Load the package and indicate which WFS resource you want to access and the version that you want to use for the requests and their answers. 
+In this way you can avoid specifying this in the separate function calls.
+
+```{r initialize1}
+library(HOQCwfs)
+WFS_set_url()      # default https://geoweb.amstelveen.nl/geoserver/topp/wfs will be used
+WFS_set_version()  # default 1.1.0 will be used
 ```
+
+#### Look at the possibilities the WFS resource has to offer 
+Retrieve the GetCapabilities document that describes the various features of the WFS resource and the actions that can be done. Because I have only read-access to WFS resources I am most interested in the query actions. An 'impression' of the rather extensive GetCapabilities xml document is given below.
+```{r getcapabilities1}
+xmlcap <- WFS_getcapabilities()  
+class(xmlcap)
+```
+```{r getcapabilities2,echo=F}
+HOQCutil::cap.out(print(xmlcap),width=110)
+```
+The xml document can be written to a local dataset with the `out_path` argument:
+```{r getcapabilities3,eval=F}
+xmlcap <- WFS_getcapabilities(out_path='mycap.xml') 
+```
+
+#### Look at the various features of the WFS resource
+From the GetCapabilities document we can extract the features that are available:
+```{r featuretypes1}
+ft1 <- WFS_featuretypes(xmlcap)
+dim(ft1)
+```
+```{r featuretypes2,echo=F}
+ft2 <- WFS_featuretypes(xmlcap,
+       filternames=stringr::fixed("bomen", ignore_case = T))
+```
+When there are many features (`r dim(ft1)[1]` in this case) and we are just interested in feature names that contain the characters 'bomen' (i.e. 'trees') we can filter the names in the following way that results in only `r dim(ft2)[1]` cases
+```{r ref.label='featuretypes2',eval=F}
+```
+```{r featuretypes3}
+class(ft2)
+dim(ft2)
+ft2$layer
+str(head(ft2,2)) # show only first two 'bomen' featuretypes 
+```
+```{r describefeaturetype1,echo=F}
+bomen_fields_1_3<- WFS_describefeaturetype(ft2$layer[c(1,3)])
+```
+
+#### Look at the data fields of featuretypes
+For this we use the function `WFS_describefeaturetype` that executes the WFS `DescribeFeatureType` request. 
+As an example lets us look at the first and third featuretype in ft2 (`r glue::glue_collapse(glue::backtick(ft2$layer[c(1,3)]),last=" and ")`). Here we only show the first `5` rows of the result tibble of `r dim(bomen_fields_1_3)[1]` rows.
+```{r ref.label='describefeaturetype1',eval=F}
+```
+```{r describefeaturetype2}
+head(bomen_fields_1_3,5)
+```
+Because we later will use the fields of `topp:gidw_groenbomen` we will show all fields for this featuretype. Because we now request only one featuretype we can save the result of `DescribeFeatureType` in an xml file. Then we have the standard output:
+```{r describefeaturetype3}
+WFS_describefeaturetype("topp:gidw_groenbomen",out_path = 'desc.xml')
+```
+and the `desc.xml` file with its contents:
+```{r describefeaturetype4,echo=F}
+HOQCutil::cap.out(cat(readLines("desc.xml",warn = F),sep='\n'), width=110) 
+```
+```{r unlink, echo=F}
+unlink('desc.xml')
+```
+
