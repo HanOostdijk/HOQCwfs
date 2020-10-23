@@ -5,7 +5,9 @@
 \alias{WFS_get_url}
 \alias{WFS_set_version}
 \alias{WFS_get_version}
-\title{Get/Set url and request version for the WFS service}
+\alias{WFS_set_sep}
+\alias{WFS_get_sep}
+\title{Get/Set default parameters url, request version and separator}
 \usage{
 WFS_set_url(url = NULL)
 
@@ -14,25 +16,40 @@ WFS_get_url()
 WFS_set_version(version = NULL)
 
 WFS_get_version()
+
+WFS_set_sep(sep = NULL)
+
+WFS_get_sep()
 }
 \arguments{
 \item{url}{NULL for the default url ( \strong{https://geoweb.amstelveen.nl/geoserver/topp/wfs} ) or the url of the WFS service otherwise}
 
 \item{version}{NULL for the default ( \strong{1.1.0} ) request version or an alternative version (e.g. 2.0.0 ) otherwise}
+
+\item{sep}{NULL for the default ( \strong{\verb{\\n}} ) separator or an alternative sep (e.g. \code{''}  ) otherwise}
 }
 \value{
 Character vector (invisible for the set version) with the url or version to be used
 }
 \description{
-Determines from which WFS service information will be extracted and the version of the WFS requests to use. If the url is not specified before
-the default url (https://geoweb.amstelveen.nl/geoserver/topp/wfs) will be used. If no version is specified the default version (1.1.0) is be used.
+The \code{url}  determines the location of the WFS service. If the \code{url} is not specified before a \code{HOQCwfs} function is used,
+the default url (https://geoweb.amstelveen.nl/geoserver/topp/wfs) will be used. \cr
+The \code{version} determines the version of the WFS requests to be used. If no \code{version} is specified before a \code{HOQCwfs} function is used,
+the default version (1.1.0) is be used.
+The \code{sep} determines the separator to include in the output of the \code{\link[=fg]{fg()}} function. If no \code{sep} is specified before a \code{HOQCwfs} function is used,
+the new line character (\verb{\\n}) is be used.
 \cr\cr
-Note that these values are used as the default values in the various request functions. They can always be overwritten in these functions.
+Note that these values are used as the default values for the various functions. They can always be overwritten there.
 }
 \examples{
+\dontrun{
 WFS_set_url("https://geoweb.amstelveen.nl/geoserver/topp/wfs")
+}
 WFS_get_url()
 WFS_set_version()
 WFS_set_version('2.0.0')
 WFS_get_version()
+WFS_set_sep()
+WFS_set_sep('\n')
+WFS_get_sep()
 }

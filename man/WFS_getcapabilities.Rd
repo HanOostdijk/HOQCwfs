@@ -25,5 +25,7 @@ or character string 'UNEXPECTED ERROR' when an error was encountered
 Retrieve the GetCapabilities document with request version \code{version} for WFS service \code{url}
 }
 \examples{
+\dontrun{
 WFS_getcapabilities("https://geoweb.amstelveen.nl/geoserver/topp/wfs","1.1.0","gc.xml")
+}
 }

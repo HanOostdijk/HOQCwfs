@@ -22,4 +22,16 @@ test_that("WFS_init checks", {
   expect_equal(t, y)
   y = WFS_set_version(NULL)
   expect_equal(y, HOQCwfs:::WFS_default_version)
+
+  z = WFS_get_sep()
+  expect_equal(length(ls(envir = HOQCwfs:::.WFS_options)), 3)
+  expect_equal(HOQCwfs:::.WFS_options$sep, z)
+  t = " this is a test"
+  z = WFS_set_sep(t)
+  expect_equal(length(ls(envir = HOQCwfs:::.WFS_options)), 3)
+  expect_equal(t, z)
+  z = WFS_set_sep(NULL)
+  expect_equal(HOQCwfs:::.WFS_options$sep, z)
+  expect_equal(HOQCwfs:::.WFS_options$sep, HOQCwfs:::WFS_default_sep)
+
 })

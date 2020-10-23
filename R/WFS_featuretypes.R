@@ -3,13 +3,15 @@
 #'
 #' Retrieve the names of the features with spatial information from a GetCapabilities document
 #' @param xml_doc XML document with the output of a GetCapabilities document
-#' @param filternames Character string that filters the returned featurenames
+#' @param filternames Character string that filters the returned featurenames (using the function [stringr::str_detect()] )
 #' @return tibble with name, default CRS, lower and upper corner (in WGS84 coordinates) for each filtered featuretype name
 #' @export
 #' @examples
+#' \dontrun{
 #' xml_cap1 <- WFS_getcapabilities()
 #' FeatureTypes1 <- WFS_featuretypes(xml_cap1,
 #'        filternames=stringr::fixed("bomen", ignore_case = T))
+#' }
 
 WFS_featuretypes <- function(xml_doc,filternames=NULL){
   `%>%` <- magrittr::`%>%`

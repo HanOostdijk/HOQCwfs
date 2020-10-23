@@ -2,8 +2,13 @@
 
 export(WFS_describefeaturetype)
 export(WFS_featuretypes)
+export(WFS_get_sep)
 export(WFS_get_url)
 export(WFS_get_version)
 export(WFS_getcapabilities)
+export(WFS_getfeature)
+export(WFS_set_sep)
 export(WFS_set_url)
 export(WFS_set_version)
+export(bg)
+export(fg)

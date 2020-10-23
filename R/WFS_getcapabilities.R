@@ -9,7 +9,9 @@
 #' or character string 'UNEXPECTED ERROR' when an error was encountered
 #' @export
 #' @examples
+#' \dontrun{
 #' WFS_getcapabilities("https://geoweb.amstelveen.nl/geoserver/topp/wfs","1.1.0","gc.xml")
+#' }
 
 WFS_getcapabilities <- function(url=WFS_get_url(),version=WFS_get_version(),out_path=NULL){
   url       <- httr::parse_url(url)
