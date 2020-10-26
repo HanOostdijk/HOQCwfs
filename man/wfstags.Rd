@@ -30,7 +30,8 @@ e.g.
 \cr\cr \code{bg('PropertyName', 'topp:objec_omschrijf')}
 \cr  will create
 \cr \verb{<PropertyName>topp:objec_omschrijf</PropertyName>}
-\cr\cr The function \code{fg} allows additional arguments for the tag and allows subtags. See \strong{Examples}.
+\cr\cr The function \code{fg} allows additional arguments for the tag and allows subtags.
+See \strong{Examples} and the functions in \link{wfsfilteraux}
 }
 \examples{
 fg(

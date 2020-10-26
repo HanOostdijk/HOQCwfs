@@ -7,8 +7,8 @@
 #' \cr\cr `bg('PropertyName', 'topp:objec_omschrijf')`
 #' \cr  will create
 #' \cr `<PropertyName>topp:objec_omschrijf</PropertyName>`
-#' \cr\cr The function `fg` allows additional arguments for the tag and allows subtags. See **Examples**.
-#'
+#' \cr\cr The function `fg` allows additional arguments for the tag and allows subtags.
+#' See **Examples** and the functions in [wfsfilteraux]
 #'
 #' @param tag Character with tag that will be used as both start and end tag
 #' @param ... Character arguments that will be inserted between start and end tag

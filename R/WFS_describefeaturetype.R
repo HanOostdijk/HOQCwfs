@@ -36,7 +36,7 @@ WFS_describefeaturetype <-
           ,typename = typename
         )
         request   <- httr::build_url(url)
-        xml_doc        <- xml2::read_xml((request), options = "NOWARNING")
+        xml_doc        <- xml2::read_xml(request, options = "NOWARNING")
         if (xml2::xml_name(xml_doc) == "ExceptionReport") {
           return(tibble::tibble(typename = typename,name='*NOT_FOUND*'))
         }
