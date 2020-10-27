@@ -9,7 +9,8 @@ WFS_getfeature(
   ...,
   url = WFS_get_url(),
   version = WFS_get_version(),
-  debug = F
+  debug = F,
+  verbose = F
 )
 }
 \arguments{
@@ -19,12 +20,15 @@ WFS_getfeature(
 
 \item{url}{URL of the WFS service. See \code{\link[=WFS_get_url]{WFS_get_url()}} for the default}
 
-\item{version}{software version for WFS service request. See \code{\link[=WFS_get_version]{WFS_get_version()}} for the default#'}
+\item{version}{software version for WFS service request. See \code{\link[=WFS_get_version]{WFS_get_version()}} for the default}
 
-\item{debug}{Logical indicating only json output required}
+\item{debug}{Logical indicating the httr response is to be returned}
+
+\item{verbose}{Logical indicating full request and httr response code will be displayed}
 }
 \value{
-a \code{sf} object with the requested information (the 'id' variable and the geometry will always be included) or a character string with an error message
+a \code{sf} object with the requested information (the 'id' variable and the geometry will always be included)
+or a character string with an error message
 }
 \description{
 Retrieve the requested information
@@ -35,10 +39,12 @@ Arguments that are recognized by the GetFeature request are:
 \item \code{bbox        } (not in combination with \code{cql_filter} or \code{filter})
 \item \code{cql_filter  }
 \item \code{filter      }
+\item \code{resultType} - default 'results' and alternative 'hits'. In the latter case only the number of matched features (\code{numbeOfFeatures} in 1.1.0 or \code{numberMatched} in 2.0.0) is returned
 \item \code{srsname     } indicate the crs for the coordinates e.g. \code{srsname='EPSG:4326'}
 \item \code{propertyname} the name of the fields to retrieve. The \code{id} and \code{geometry} fields will always be included.
 \item \code{startIndex  } number of features to skip before retrieving features ( the output with \code{startindex=1} will start with the second feature )
 \item \code{maxfeatures } (only for version \verb{1.1.0}) or \code{count} (only for version \verb{2.0.0}) indicates the number of features to retrieve
+The \code{GetFeature} argument \code{outputFormat} has value 'application/json'but this can be overwritten
 }
 }
 \examples{

@@ -35,4 +35,8 @@ test_that("WFS_describefeaturetype checks", {
   expect_identical(unique(r$typename),ftn)
   expect_identical(length(grep('*NOT_FOUND*',r$name,fixed = T,ignore.case =F)),0L)
 
+  version <- 'x.y.z'
+
+  r       <- WFS_describefeaturetype(fte,version=version)
+  expect_identical(r,"only version '1.1.0' and '2.0.0' are allowed")
 })

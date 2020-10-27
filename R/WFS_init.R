@@ -13,7 +13,7 @@ WFS_default_sep     <- "\n"
 #' The `url`  determines the location of the WFS service. If the `url` is not specified before a `HOQCwfs` function is used,
 #' the default url (`r WFS_default_url`) will be used. \cr
 #' The `version` determines the version of the WFS requests to be used. If no `version` is specified before a `HOQCwfs` function is used,
-#' the default version (`r WFS_default_version`) is be used.
+#' the default version (`r WFS_default_version`) is be used. Currently only '1.1.0' and '2.0.0' are supported.
 #' The `sep` determines the separator to include in the output of the [HOQCwfs::fg()] function. If no `sep` is specified before a `HOQCwfs` function is used,
 #' the new line character (`\n`) is be used.
 #' \cr\cr
@@ -58,7 +58,11 @@ WFS_get_url <- function () {
 
 
 WFS_set_version <- function (version=NULL) {
-	if (is.null(version)) {
+	if ( (!is.null(version)) && (! (version %in% c('1.1.0','2.0.0') ) ) ) {
+	  warning("version ",version," is not supported: ",WFS_default_version," will be used")
+		version = WFS_default_version
+	}
+	if (is.null(version)  ) {
 		version = WFS_default_version
 	}
 	.WFS_options$version = version

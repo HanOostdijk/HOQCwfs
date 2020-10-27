@@ -18,10 +18,15 @@ test_that("WFS_init checks", {
   expect_equal(x, HOQCwfs:::WFS_default_url)
   expect_equal(HOQCwfs:::.WFS_options$version, HOQCwfs:::WFS_default_version)
   expect_equal(y, HOQCwfs:::WFS_default_version)
-  y = WFS_set_version(t)
-  expect_equal(t, y)
+  y = WFS_set_version()
+  expect_equal(y,HOQCwfs:::WFS_default_version)
   y = WFS_set_version(NULL)
   expect_equal(y, HOQCwfs:::WFS_default_version)
+  suppressWarnings({y = WFS_set_version("x.y.z")})
+  expect_equal(y, HOQCwfs:::WFS_default_version)
+  expect_warning(WFS_set_version("x.y.z"),
+                 'version x.y.z is not supported: 1.1.0 will be used',
+                 fixed=T)
 
   z = WFS_get_sep()
   expect_equal(length(ls(envir = HOQCwfs:::.WFS_options)), 3)

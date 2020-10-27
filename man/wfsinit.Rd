@@ -35,7 +35,7 @@ Character vector (invisible for the set version) with the url or version to be u
 The \code{url}  determines the location of the WFS service. If the \code{url} is not specified before a \code{HOQCwfs} function is used,
 the default url (https://geoweb.amstelveen.nl/geoserver/topp/wfs) will be used. \cr
 The \code{version} determines the version of the WFS requests to be used. If no \code{version} is specified before a \code{HOQCwfs} function is used,
-the default version (1.1.0) is be used.
+the default version (1.1.0) is be used. Currently only '1.1.0' and '2.0.0' are supported.
 The \code{sep} determines the separator to include in the output of the \code{\link[=fg]{fg()}} function. If no \code{sep} is specified before a \code{HOQCwfs} function is used,
 the new line character (\verb{\\n}) is be used.
 \cr\cr

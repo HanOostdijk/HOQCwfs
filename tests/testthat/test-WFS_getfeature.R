@@ -4,6 +4,7 @@ test_that("WFS_getfeature checks", {
   typename <- 'topp:gidw_groenbomen'
   version1 <- '1.1.0'
   version2 <- '2.0.0'
+  version3 <- 'x.3.0'
   pnames    <- c("boom_omschrijf", "jaar")
   # tests for case without queries 1.1.0 and 2.0.0
   fti1     <- WFS_describefeaturetype(typename,version=version1)$name
@@ -15,7 +16,12 @@ test_that("WFS_getfeature checks", {
   wfs2     <-  WFS_getfeature(typename,version=version2)
   expect_identical(wfs1,wfs2)
   expect_identical(fti1a,names(wfs1))
-
+  wfs3e    <-  WFS_getfeature(typename,version=version3)
+  expect_identical(wfs3e,"only version '1.1.0' and '2.0.0' are allowed")
+  wfs3f    <-  WFS_getfeature(typename,version=version1,resultType='hits' )
+  wfs3g    <-  WFS_getfeature(typename,version=version2,resultType='hits' )
+  expect_identical(wfs3f,wfs3g)
+  expect_equal(wfs3f,dim(wfs1)[1])
 
   # tests for simple cql_filter query 1.1.0 and 2.0.0
   a_tree    <- r"(Prunus serrulata 'Kanzan')"    # embedded quote
@@ -29,17 +35,18 @@ test_that("WFS_getfeature checks", {
   expect_identical(wfs3,wfs3b)
 
   # same tests with a WFS filter
-  f4 = fg("Filter"
-    , fg("PropertyIsEqualTo"
-       , bg('PropertyName', 'topp:boom_omschrijf')
-       , bg('Literal', a_tree )
-       )
+
+  f4a <- build_filter(version='1.1.0'
+          , propeq_xml('topp:boom_omschrijf',a_tree)
+   )
+  f4b <- build_filter(version='2.0.0'
+          , propeq_xml('topp:boom_omschrijf',a_tree)
    )
 
   wfs4a      <- WFS_getfeature(typename, version=version1,
-              filter  = f4)
+              filter  = f4a)
   wfs4b      <- WFS_getfeature(typename, version=version2,
-              filter  = f4)
+              filter  = f4b)
   expect_identical(wfs3,wfs4a)
   expect_identical(wfs3,wfs4b)
 
@@ -47,10 +54,10 @@ test_that("WFS_getfeature checks", {
   wfs5       <- wfs3 %>% dplyr::slice(4:8)
   wfs5a      <- WFS_getfeature(typename, version=version1,
               startindex=3,maxfeatures=5,
-              filter  = f4)
+              filter  = f4a)
   wfs5b      <- WFS_getfeature(typename, version=version2,
               startindex=3,count=5,
-              filter  = f4)
+              filter  = f4b)
   wfs5c      <- WFS_getfeature(typename, version=version1,
               startindex=3,maxfeatures=5,
               cql_filter= glue::glue("boom_omschrijf='{bm}'") )
@@ -69,11 +76,11 @@ test_that("WFS_getfeature checks", {
   wfs6a      <- WFS_getfeature(typename, version=version1,
               startindex=3,maxfeatures=5,
               propertyname=glue::glue_collapse(pnames,sep=','),
-              filter  = f4)
+              filter  = f4a)
   wfs6b      <- WFS_getfeature(typename, version=version2,
               startindex=3,count=5,
               propertyname=glue::glue_collapse(pnames,sep=','),
-              filter  = f4)
+              filter  = f4b)
   expect_identical(wfs6a,wfs6)
   expect_identical(wfs6b,wfs6)
 
@@ -83,7 +90,7 @@ test_that("WFS_getfeature checks", {
               startindex=3,maxfeatures=5,
               propertyname=glue::glue_collapse(pnames,sep=','),
               srsname='EPSG:4326',
-              filter  = f4)
+              filter  = f4a)
   expect_equal(sf::st_crs(wfs7a)$input,"WGS 84") # other word for EPSG:4326
   sf::st_crs(wfs7a)<- 'EPSG:4326' # indicate so and then expect equal
   expect_equal(wfs7a,wfs7)
@@ -91,7 +98,7 @@ test_that("WFS_getfeature checks", {
               startindex=3,count=5,
               propertyname=glue::glue_collapse(pnames,sep=','),
               srsname='EPSG:4326',
-              filter  = f4)
+              filter  = f4b)
   expect_equal(sf::st_crs(wfs7b)$input,"WGS 84") # other word for EPSG:4326
   sf::st_crs(wfs7b)<- 'EPSG:4326' # indicate so and then expect equal
   expect_equal(wfs7b,wfs7)
