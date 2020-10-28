@@ -19,7 +19,7 @@
 #' - `srsname     ` indicate the crs for the coordinates e.g. `srsname='EPSG:4326'`
 #' - `propertyname` the name of the fields to retrieve. The `id` and `geometry` fields will always be included.
 #' - `startIndex  ` number of features to skip before retrieving features ( the output with `startindex=1` will start with the second feature )
-#' - `maxfeatures ` (only for version `1.1.0`) or `count` (only for version `2.0.0`) indicates the number of features to retrieve
+#' - `maxfeatures ` (version `1.1.0`) or `count` (version `2.0.0`) indicates the number of features to retrieve. When the wrong argument is specified it will be translated in the other.
 #' The `GetFeature` argument `outputFormat` has value 'application/json'but this can be overwritten
 #'
 #' @examples
@@ -46,7 +46,7 @@
 #' )
 #' f5
 #' wfs5 = WFS_getfeature(typename,
-#'    srsname = 'EPSG:4326', # but request coordinates in  WGS84 (EPSG4326)
+#'    srsname = 'EPSG:4326', # but request coordinates in  WGS84 (EPSG:4326)
 #'    filter  = f5)
 #' }
 
@@ -62,6 +62,14 @@ WFS_getfeature <- function(typename, ..., url=WFS_get_url(),version=WFS_get_vers
         )
   uniq <- !(names(url$query) %in% names(list(...)) ) # enable replace
   url$query = append(url$query[uniq],list(...))
+  n <- names(url$query)
+  if (version == '1.1.0') {
+    n[grepl('count',n,ignore.case =T,fixed=F)] <- 'maxFeatures'
+  } else {
+    n[grepl('maxFeatures',n,ignore.case =T,fixed=F)] <- 'count'
+  }
+  names(url$query) <- n
+  url$query <- keep_first_unique(url$query)
   request <- httr::build_url(url)
   res <- WFS_GET_request (request,debug=debug,to_sf=T,verbose=verbose)
   if ( inherits(res,'data.frame') ) row.names(res) <- NULL
@@ -77,6 +85,13 @@ WFS_getfeature <- function(typename, ..., url=WFS_get_url(),version=WFS_get_vers
   }
   res
 }
+
+  keep_first_unique <- function(mylist) {
+    # keep first entry of entries with duplicated names
+    n  <- names(mylist)
+    un <-unique(match(n,n) )
+    mylist[un]
+  }
 
 #' Retrieve information with the GET request
 #'

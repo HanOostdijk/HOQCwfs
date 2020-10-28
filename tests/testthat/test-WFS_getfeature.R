@@ -55,8 +55,14 @@ test_that("WFS_getfeature checks", {
   wfs5a      <- WFS_getfeature(typename, version=version1,
               startindex=3,maxfeatures=5,
               filter  = f4a)
+  wfs5a1    <- WFS_getfeature(typename, version=version1,
+              startindex=3,count=5, # translated
+              filter  = f4a)
   wfs5b      <- WFS_getfeature(typename, version=version2,
               startindex=3,count=5,
+              filter  = f4b)
+  wfs5b1      <- WFS_getfeature(typename, version=version2,
+              startindex=3,maxfeatures=5,  # translated
               filter  = f4b)
   wfs5c      <- WFS_getfeature(typename, version=version1,
               startindex=3,maxfeatures=5,
@@ -65,6 +71,7 @@ test_that("WFS_getfeature checks", {
               startindex=3,count=5,
               cql_filter= glue::glue("boom_omschrijf='{bm}'") )
   expect_identical(wfs5a,wfs5)
+  expect_identical(wfs5a1,wfs5)
   expect_identical(wfs5b,wfs5)
   expect_identical(wfs5c,wfs5)
   expect_identical(wfs5d,wfs5)

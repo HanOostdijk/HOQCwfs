@@ -43,7 +43,7 @@ Arguments that are recognized by the GetFeature request are:
 \item \code{srsname     } indicate the crs for the coordinates e.g. \code{srsname='EPSG:4326'}
 \item \code{propertyname} the name of the fields to retrieve. The \code{id} and \code{geometry} fields will always be included.
 \item \code{startIndex  } number of features to skip before retrieving features ( the output with \code{startindex=1} will start with the second feature )
-\item \code{maxfeatures } (only for version \verb{1.1.0}) or \code{count} (only for version \verb{2.0.0}) indicates the number of features to retrieve
+\item \code{maxfeatures } (version \verb{1.1.0}) or \code{count} (version \verb{2.0.0}) indicates the number of features to retrieve. When the wrong argument is specified it will be translated in the other.
 The \code{GetFeature} argument \code{outputFormat} has value 'application/json'but this can be overwritten
 }
 }
@@ -71,7 +71,7 @@ f5 = fg("Filter"
 )
 f5
 wfs5 = WFS_getfeature(typename,
-   srsname = 'EPSG:4326', # but request coordinates in  WGS84 (EPSG4326)
+   srsname = 'EPSG:4326', # but request coordinates in  WGS84 (EPSG:4326)
    filter  = f5)
 }
 }
