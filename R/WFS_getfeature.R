@@ -60,8 +60,9 @@ WFS_getfeature <- function(typename, ..., url=WFS_get_url(),version=WFS_get_vers
         ,typename   = typename
         ,outputFormat = "application/json"
         )
-  uniq <- !(names(url$query) %in% names(list(...)) ) # enable replace
-  url$query = append(url$query[uniq],list(...))
+  # uniq <- !(names(url$query) %in% names(list(...)) ) # enable replace
+  # url$query = append(url$query[uniq],list(...))
+  url$query = append(url$query,list(...))
   n <- names(url$query)
   if (version == '1.1.0') {
     n[grepl('count',n,ignore.case =T,fixed=F)] <- 'maxFeatures'
@@ -69,7 +70,7 @@ WFS_getfeature <- function(typename, ..., url=WFS_get_url(),version=WFS_get_vers
     n[grepl('maxFeatures',n,ignore.case =T,fixed=F)] <- 'count'
   }
   names(url$query) <- n
-  url$query <- keep_first_unique(url$query)
+  url$query <- keep_unique(url$query, keep_first = F)
   request <- httr::build_url(url)
   res <- WFS_GET_request (request,debug=debug,to_sf=T,verbose=verbose)
   if ( inherits(res,'data.frame') ) row.names(res) <- NULL
@@ -86,12 +87,17 @@ WFS_getfeature <- function(typename, ..., url=WFS_get_url(),version=WFS_get_vers
   res
 }
 
-  keep_first_unique <- function(mylist) {
-    # keep first entry of entries with duplicated names
-    n  <- names(mylist)
-    un <-unique(match(n,n) )
-    mylist[un]
+keep_unique <- function(mylist, keep_first = T) {
+  # keep first or last entry of entries with duplicated names
+  n  <- names(mylist)
+  if (keep_first) {
+    un <- unique(match(n, n))
+    return (mylist[un])
+  } else {
+    un <- unique(match(n, rev(n)))
+    return (mylist[1+length(n)-un])
   }
+}
 
 #' Retrieve information with the GET request
 #'
