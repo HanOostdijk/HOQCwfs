@@ -73,16 +73,23 @@ WFS_getfeature <- function(typename, ..., url=WFS_get_url(),version=WFS_get_vers
   url$query <- keep_unique(url$query, keep_first = F)
   request <- httr::build_url(url)
   res <- WFS_GET_request (request,debug=debug,to_sf=T,verbose=verbose)
-  if ( inherits(res,'data.frame') ) row.names(res) <- NULL
-  if ( inherits(res,'xml_document') && (xml2::xml_name(res) == 'FeatureCollection') ){
-    if ( version =='1.1.0' ) {
-       res1 <- xml2::xml_attr(res,'numberOfFeatures',NULL)
-       if (!is.null(res1)) res<- as.numeric(res1)
-    }
-    else if ( version =='2.0.0' ) {
-       res1 <- xml2::xml_attr(res,'numberMatched',NULL)
-       if (!is.null(res1)) res<- as.numeric(res1)
-    }
+  if (inherits(res, 'data.frame'))
+    row.names(res) <- NULL
+  if (inherits(res, 'xml_document')) {
+    if (xml2::xml_name(res) == 'FeatureCollection') {
+      if (version == '1.1.0') {
+        res1 <- xml2::xml_attr(res, 'numberOfFeatures', NULL)
+        if (!is.null(res1))
+          res <- as.numeric(res1)
+      }
+      else if (version == '2.0.0') {
+        res1 <- xml2::xml_attr(res, 'numberMatched', NULL)
+        if (!is.null(res1))
+          res <- as.numeric(res1)
+      }
+    } else if (xml2::xml_name(res) == 'ExceptionReport')
+        res <-
+          xml2::xml_text(xml2::xml_find_first(res, './/ows:ExceptionText'))
   }
   res
 }
@@ -128,8 +135,6 @@ WFS_GET_request <- function (request,debug=F,to_sf=T,verbose=F){
     }
   } else if (grepl('xml',cnt1,fixed = T)) {
       r <- xml2::read_xml(res_data, options = "NOWARNING")
-      # if (xml2::xml_name(r) == 'ExceptionReport')
-      #   r <- xml2::xml_text(xml2::xml_find_first(r,'.//ows:ExceptionText'))
   } else {
       r <- res_data
   }

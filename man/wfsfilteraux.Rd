@@ -4,19 +4,24 @@
 \alias{build_filter}
 \alias{propeq_xml}
 \alias{bbox_xml}
+\alias{convert_bbox}
 \alias{wfsfilteraux}
 \title{Auxiliary functions to create filters}
 \usage{
-build_filter(..., version = WFS_get_version())
+build_filter(..., version = WFS_get_version(), sep = WFS_get_sep())
 
 propeq_xml(propname, propvalue, version = WFS_get_version())
 
-bbox_xml(gemprop, crs, bbox, version = WFS_get_version())
+bbox_xml(gemprop, crs_in, bbox_coords, version = WFS_get_version())
+
+convert_bbox(bbox_coords, crs_in, crs_out)
 }
 \arguments{
 \item{...}{XML elements to be added to filter}
 
 \item{version}{Character string with the WFS request version}
+
+\item{sep}{NULL for the default separator (set by \code{\link[=WFS_set_sep]{WFS_set_sep()}}) or required separator otherwise}
 
 \item{propname}{Character string with the \code{PropertyName} (1.1.0) or \code{ValueReference} (2.0.0)}
 
@@ -24,9 +29,11 @@ bbox_xml(gemprop, crs, bbox, version = WFS_get_version())
 
 \item{gemprop}{Character string with the name of the geometric field}
 
-\item{crs}{Character string with the name of crs of the bbox (e.g. \code{"EPSG:28992"} )}
+\item{crs_in}{Character string with the name of the input crs (e.g. \code{"EPSG:4326"} )}
 
-\item{bbox}{Numeric vector with four elements indicating the bounding box}
+\item{bbox_coords}{Numeric vector with four elements indicating the bounding box}
+
+\item{crs_out}{Character string with the name of the output crs (e.g. \code{"EPSG:28992"} )}
 
 \item{tag}{Character with tag that will be used as both start and end tag}
 }
@@ -34,21 +41,31 @@ bbox_xml(gemprop, crs, bbox, version = WFS_get_version())
 Character vector with the created filter or xml fragment
 }
 \description{
-The function \code{build_filter} creates a filter for the indication version by inserting the appropriate 'xmlns' urls
+\itemize{
+\item The function \code{build_filter} creates a filter for the indication version by inserting the appropriate 'xmlns' urls
 in the Filter tag and inserting the XML elements from the \code{...} argument i.e. all arguments except \code{version}.
 While evaluating these elements the version is temporarily set to the argument \code{version} of \code{build_filter} unless explicitly
-overwritten.\cr\cr
-The function \code{propeq_xml} creates a \code{PropertyIsEqualTo} XML clause\cr\cr
-The function \code{bbox_xml} creates a \code{BBOX} XML clause
+overwritten.
+\item The function \code{propeq_xml} creates a \code{PropertyIsEqualTo} XML clause
+\item The function \code{bbox_xml} creates a \code{BBOX} XML clause
+\item The function \code{convert_bbox} convert a bbox from one CRS to another
+}
 }
 \examples{
-bbox_28992 = c(119103, 480726, 119160, 481078)
-x=build_filter(version='2.0.0',
+bbox_28992 <- c(119103, 480726, 119160, 481078)
+f1 <- build_filter(version='1.0.0',
    fg("And"
        , propeq_xml('topp:boom_omschrijf',"Alnus glutinosa 'Laciniata'")
        , bbox_xml("geometrie","EPSG:28992",bbox_28992)
      )
   )
-cat(x)
+bbox_4326 <- convert_bbox(bbox_28992,"EPSG:28992","EPSG:4326")
+f2 <- build_filter(version='2.0.0',
+   fg("And"
+       , propeq_xml('topp:boom_omschrijf',"Alnus glutinosa 'Laciniata'")
+       , bbox_xml("geometrie","EPSG:4326",bbox_4326)
+     )
+  )
+
 
 }

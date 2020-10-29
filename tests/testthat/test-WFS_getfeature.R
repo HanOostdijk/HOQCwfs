@@ -124,6 +124,14 @@ test_that("WFS_getfeature checks", {
   bbox_wgs84 <- c(4.860793, 52.313319, 4.861587, 52.316493 )
   x <- sf::st_sfc(sf::st_multipoint(matrix(bbox_wgs84,ncol=2,byrow=T)),crs=4326)
   bbox_28992 <- sf::st_bbox(sf::st_transform(x,crs=28992))
+
+  convert_bbox <- function (bbox_coords,crs_in,crs_out) {
+    mp_sfc <- sf::st_sfc(
+      sf::st_multipoint(matrix(bbox_coords,ncol=2,byrow=T)),crs=crs_in)
+    sf::st_bbox(sf::st_transform(mp_sfc,crs=crs_out))
+  }
+
+
   wfs8a      <- WFS_getfeature(typename, version=version1,
               bbox=glue::glue_collapse(bbox_28992,sep=','),
               propertyname=glue::glue_collapse(pnames,sep=','),
