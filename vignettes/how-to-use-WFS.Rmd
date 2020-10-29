@@ -1,6 +1,9 @@
 ---
 title: "How to use the HOQCwfs package"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    toc: true 
+    toc_depth: 5
 vignette: >
   %\VignetteIndexEntry{How to use the HOQCwfs package}
   %\VignetteEngine{knitr::rmarkdown}
@@ -17,23 +20,28 @@ knitr::opts_chunk$set(
 ```{r setup,echo=F}
 ```
 
+### Introduction {#introduction}
+This package contains functions to retrieve information from a Web Feature Service (WFS) resource. 
+It generates HTML requests for the WFS API. 
 
-### Example
+### Workflow {#workflow}
 
 A typical workflow looks like this :
 
-#### Initialize
-Load the package and indicate which WFS resource you want to access and the version that you want to use for the requests and their answers. 
-In this way you can avoid specifying this in the separate function calls.
+#### Initialize {#initialize}
+Load the package and indicate which WFS resource you want to access and the version that you want to use for the requests and their answers.
+In this way you can avoid specifying this in the separate function calls.  
+ALso specify the separator that by default will be used in generated XML fragments.
 
 ```{r initialize1}
 library(HOQCwfs)
 WFS_set_url()      # default https://geoweb.amstelveen.nl/geoserver/topp/wfs will be used
 WFS_set_version()  # default 1.1.0 will be used
+WFS_set_sep()      # default '\n' will be used
 ```
 
-#### Look at the possibilities the WFS resource has to offer 
-Retrieve the GetCapabilities document that describes the various features of the WFS resource and the actions that can be done. Because I have only read-access to WFS resources I am most interested in the query actions. An 'impression' of the rather extensive GetCapabilities xml document is given below.
+#### Look at the possibilities the WFS resource has to offer {#look-at-possibilities}
+Retrieve the GetCapabilities document that describes the various features of the WFS resource and the actions that can be done. Because I have only read-access to WFS resources I am only interested in the query actions. An 'impression' of the rather extensive GetCapabilities xml document is given below.
 ```{r getcapabilities1}
 xmlcap <- WFS_getcapabilities()  
 class(xmlcap)
@@ -45,7 +53,8 @@ The xml document can be written to a local dataset with the `out_path` argument:
 ```{r getcapabilities3,eval=F}
 xmlcap <- WFS_getcapabilities(out_path='mycap.xml') 
 ```
-
+[[back to contents]](#TOC)
+ 
 #### Look at the various features of the WFS resource {#look-at-features}
 From the GetCapabilities document we can extract the features that are available:
 ```{r featuretypes1}
@@ -68,8 +77,9 @@ str(ft2[3,]) # show only featuretype 'topp:gidw_groenbomen'
 ```{r describefeaturetype1,echo=F}
 bomen_fields_1_3<- WFS_describefeaturetype(ft2$layer[c(1,3)])
 ```
+[[back to contents]](#TOC)
 
-#### Look at the data fields of featuretypes
+#### Look at the data fields of featuretypes {#look-at-data-fields}
 For this we use the function `WFS_describefeaturetype` that executes the WFS `DescribeFeatureType` request. 
 As an example lets us look at the first and third featuretype in ft2 (`r glue::glue_collapse(glue::backtick(ft2$layer[c(1,3)]),last=" and ")`). Here we only show the first `5` rows of the result tibble of `r dim(bomen_fields_1_3)[1]` rows.
 ```{r ref.label='describefeaturetype1',eval=F}
@@ -88,73 +98,89 @@ HOQCutil::cap.out(cat(readLines("desc.xml",warn = F),sep='\n'), width=110)
 ```{r unlink, echo=F}
 unlink('desc.xml')
 ```
+[[back to contents]](#TOC)
 
-#### Retrieve the actual data
-Now that we know the metadata of our resource we can actually retrieve the attributes and geometrical data of the features. We do this with `WFS_getfeature('typename')` to:  
+#### Retrieve the actual data {#retrieve}
+Now that we know the metadata of our resource we can actually retrieve the attributes and geometrical data of the features. We do this with `WFS_getfeature` to:  
 
-- retrieve all features with all attributes and the geometry: The `id` attribute will also be returned 
-- retrieve some features and the geometry: add `cql_filter=` or `filter=` with a filter expression
-- retrieve all features for some attributes and the geometry: add `propertyname='a1,a2'` to select the attributes `a1` and `a2`. The `id` attribute and the `geometry` will also be returned 
-- retrieve a subset of one of the above: add `maxfeatures=` or `count=` optionally in combination with `startindex=`
+- [retrieve all features with all attributes and the geometry](#retrieve-all): The `id` attribute will also be returned 
+- [retrieve some features](#retrieve-some-features) and the geometry: add `cql_filter=` or `filter=` with a filter expression
+- [retrieve all features for some attributes](#retrieve-attributes) and the geometry: add `propertyname='a1,a2'` to select the attributes `a1` and `a2`. The `id` attribute and the `geometry` will also be returned 
+- [change the Spatial Reference System](#change-crs) (i.e. the coordinates of the features)
+- [retrieve a subset](#retrieve-subset) of one of the above: add `maxfeatures=` or `count=` optionally in combination with `startindex=`
+- [retrieve all features in a bounding box](#retrieve_boundingbox)
+- [retrieve features in a bounding box with additional filtering](#retrieve_boundingbox-cqlfilter)
 
-If we are only interested in the number of features that would be returned we can add `resultType=hits` to any of the above. This only returns this number without any other data.
+If we are only interested in the [number of features](#number-of-features) that would be returned we can add `resultType=hits` to any of the above. This only returns this number without any other data.
 
 Examples:
 
-##### retrieve all features with all attributes and the geometry
-```{r}
+[[back to contents]](#TOC) 
+
+##### retrieve all features with all attributes and the geometry {#retrieve-all}
+```{r retrieve-all1,eval=F}
 typename  <- 'topp:gidw_groenbomen'
 wfs1      <-  WFS_getfeature(typename)
 class(wfs1)
 print(wfs1,n=5) # show only first 5 features
 ```
+```{r retrieve-all2,echo=F}
+typename  <- 'topp:gidw_groenbomen'
+```
+TODO remove eval=F  
 
-##### retrieve some features 
+[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+
+##### retrieve some features {#retrieve-some-features}
 For non-complex queries the `cql_filter` can be used. The features for the tree `Prunus serrulata 'Kanzan'` can be queried with the following code. The number of quotes in a query is often confusing (for me at least): here a set of quotes is needed because `boom_omschrijf` is a character field and quotes around 'Kanzan' have to be duplicated. 
 
-```{r}
+```{r retrieve-some-features}
 tree_name <- "Prunus serrulata ''Kanzan''"  
 tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
 print(tree_exp)
 wfs2      <-  WFS_getfeature(typename,cql_filter=tree_exp )
 print(wfs2,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
+[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
-##### retrieve some attributes 
+##### retrieve some attributes  {#retrieve-attributes}
 When we are only interested in the 'omschrijvingen' (descriptions) fields we can add the `propertyname` argument to request the fields `boom_omschrijf` and `objec_omschrijf`. Note that the `id` and `geometry` fields are always included.
 
-```{r}
+```{r retrieve-attributes}
 tree_name <- "Prunus serrulata ''Kanzan''"  
 tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
 fields    <- 'boom_omschrijf,objec_omschrijf'
 wfs3      <-  WFS_getfeature(typename,cql_filter=tree_exp,propertyname=fields )
 print(wfs3,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
+[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
-##### retrieve the number of results 
+##### retrieve the number of results {#number-of-features}
 If we want to know beforehand the number of features that a query would return we can add the `resultType=hits` argument:
 
-```{r}
+```{r number-of-features}
   WFS_getfeature(typename,cql_filter=tree_exp,propertyname=fields,resultType='hits' )
 ```
+[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
-##### change the Spatial Reference System  
+##### change the Spatial Reference System  {#change-crs}
 In the output of the previous examples we saw that the coordinates in the geometry were denoted in the Coordinate Reference System (CRS) that is used in the Netherlands: 'Amersfoort / RD New' also known as 'EPSG:28992'. If we want to have these coordinates denoted in the more commonly used 'WGS 84' (EPSG:4326) in terms of longitude and latitude we can add the `srsName` argument. SRS ([Spatial Reference System](https://en.wikipedia.org/wiki/Spatial_reference_system)) is a synonym for CRS.
 
-```{r}
+```{r change-crs}
 wfs4      <-  WFS_getfeature(typename,cql_filter=tree_exp,propertyname=fields,srsName='EPSG:4326' )
 print(wfs4,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
+[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
-##### retrieve a subset of the query results with `startindex`, `maxfeatures` and `count` and using `verbose` 
+##### retrieve a subset of the query results with `startindex`, `maxfeatures` and `count` and using `verbose` {#retrieve-subset}
 With the `startindex` and `maxfeatures` (1.1.0) or `count` (2.0.0) argument a subset of a query is produced. The `WFS__getfeature` function will use the correct version. By adding the `verbose=T` clause the generated request url will be displayed so that you can verify this. Notice that `startIndex=2` indicates that the first feature to be retrieved is number 3. In other words `startIndex` indicates the number of records to skip.
 
-```{r eval=F}
+```{r retrieve-subset1,eval=F}
 wfs5a     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6,
                              propertyname=fields,srsName='EPSG:4326'
                              ,verbose=T,version='1.1.0' )
 ```
-```{r echo=F}
+```{r retrieve-subset2,echo=F}
 
 HOQCutil::cap.out({
 wfs5a     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6,
@@ -162,31 +188,32 @@ wfs5a     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatur
                              ,verbose=T,version='1.1.0' )  
 }, width=93)
 ```
-```{r}
+```{rretrieve-subset3}
 print(wfs5a,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
 
-```{r eval=F}
+```{r retrieve-subset4,eval=F}
 wfs5b     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6,
                              propertyname=fields,srsName='EPSG:4326'
                              ,verbose=T,version='2.0.0' )
 ```
-```{r echo=F}
+```{r retrieve-subset5,echo=F}
 HOQCutil::cap.out({
 wfs5b     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6,
                              propertyname=fields,srsName='EPSG:4326'
                              ,verbose=T,version='2.0.0' )
 }, width=93)
 ```
-```{r}
+```{r retrieve-subset6}
 identical(wfs5a,wfs5b)
 ```
+[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
-##### retrieve features in a bounding box
+##### retrieve features in a bounding box {#retrieve_boundingbox}
 When you want to retrieve all features in a bounding box the `bbox=` argument can be used. When specifying the coordinates of the bounding box it is assumed that the default CRS is used.
 The default CRS for `typename` is `EPSG:28992` (see [Look at the various features of the WFS resource](#look-at-features) ). Therefore when using `WGS 84` (`EPSG:4326`) the EPSG code has to be added to the specification. Note that this only impacts the features that are selected and not their coordinates. Use `srsName='EPSG:4326'` when you want `WGS 84` coordinates.  
 In the two examples below we are interested in the same area but in the first case we use `EPSG:28992` coordinates and in the second `WGS 84` coordinates. Therefore the same features are selected
-```{r}
+```{r retrieve_boundingbox1}
 bbox_wgs84 <- c(4.860793, 52.313319, 4.861587, 52.316493 )
 bbox_28992 <- convert_bbox(bbox_wgs84,'EPSG:4326','EPSG:28992')  
 
@@ -200,11 +227,12 @@ wfs6b      <-  WFS_getfeature(typename,bbox=bbox_spec,
                              propertyname=fields )
 print(wfs6b,n=5,digits=5)
 ```
+[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
-##### retrieve features in a bounding box with additional filtering
+##### retrieve features in a bounding box with additional filtering {#retrieve_boundingbox-cqlfilter}
 A combination of `cql_filter=` or `filter=` with `bbox=` is not allowed. In that case the bbox filtering has to be included in the `cql_filter=` or `filter=` construct. E.g. (and note the quotes around `EPSG:4326` where these were not necessary in the `bbox=` case) :
 
-```{r}
+```{r retrieve_boundingbox-cqlfilter}
 tree_name <- "Alnus glutinosa ''Laciniata''"  
 tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
 bbox_spec <- glue::glue_collapse(bbox_28992,sep=',')
@@ -220,5 +248,6 @@ wfs7b      <-  WFS_getfeature(typename,cql_filter=cql_spec,
 print(wfs7b,n=5,digits=5)
 ```
 
+[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 

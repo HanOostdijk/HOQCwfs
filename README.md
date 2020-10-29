@@ -19,7 +19,7 @@ You can install this version from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("HanOostdijk/HOQCwfs")
+devtools::install_github("HanOostdijk/HOQCwfs",build_vignettes=TRUE) 
 ```
 
 ## How to use HOQCwfs
