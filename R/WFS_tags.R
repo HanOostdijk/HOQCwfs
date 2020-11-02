@@ -14,7 +14,8 @@
 #' @param ... Character arguments that will be inserted between start and end tag
 #' @param value Character argument that will be inserted between start and end tag
 #' @param ta Character with additional information for start tag
-#' @param sep NULL for the default separator (set by [WFS_set_sep()]) or required separator otherwise
+#' @param sep NULL for the default separator (set by [WFS_set_sep()]) or required separator otherwise.
+#' Only one of consecutive separators will be kept
 #' @return Character vector with the generated xml element
 #' @export
 #' @rdname wfstags
@@ -29,7 +30,10 @@
 fg <- function(tag, ..., ta=NULL, sep=WFS_get_sep()) {
   ta   <- ifelse(is.null(ta),"",glue::glue(" {ta}"))
   dots <- do.call(paste,c(list(...),sep=sep))
-  as.character(glue::glue("<{tag}{ta}>{sep}{dots}{sep}</{tag}>"))
+  x    <- as.character(glue::glue("<{tag}{ta}>{sep}{dots}{sep}</{tag}>"))
+  if (stringr::str_length(sep) >0 )
+    x <- stringr::str_replace_all(x,glue::glue("{sep}+"),sep)
+  x
 }
 
 #' @export

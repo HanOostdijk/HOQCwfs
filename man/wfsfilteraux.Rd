@@ -5,6 +5,9 @@
 \alias{propeq_xml}
 \alias{bbox_xml}
 \alias{convert_bbox}
+\alias{convert_points}
+\alias{spat_feature}
+\alias{spat_xml}
 \alias{wfsfilteraux}
 \title{Auxiliary functions to create filters}
 \usage{
@@ -14,7 +17,20 @@ propeq_xml(propname, propvalue, version = WFS_get_version())
 
 bbox_xml(gemprop, crs_in, bbox_coords, version = WFS_get_version())
 
-convert_bbox(bbox_coords, crs_in, crs_out)
+convert_bbox(coords, crs_in, crs_out)
+
+convert_points(coords, crs_in, crs_out)
+
+spat_feature(sptype, crs_in, coords, version = WFS_get_version())
+
+spat_xml(
+  gemprop,
+  feature,
+  distance = NULL,
+  version = WFS_get_version(),
+  spat_fun = "DWithin",
+  units = "meters"
+)
 }
 \arguments{
 \item{...}{XML elements to be added to filter}
@@ -31,14 +47,15 @@ convert_bbox(bbox_coords, crs_in, crs_out)
 
 \item{crs_in}{Character string with the name of the input crs (e.g. \code{"EPSG:4326"} )}
 
-\item{bbox_coords}{Numeric vector with four elements indicating the bounding box}
+\item{coords}{Numeric vector with four elements indicating the bounding box (for \code{convert_bbox} ) or a numeric vector of even length
+or numeric matrix with two columns (for \code{convert_points} )}
 
 \item{crs_out}{Character string with the name of the output crs (e.g. \code{"EPSG:28992"} )}
 
 \item{tag}{Character with tag that will be used as both start and end tag}
 }
 \value{
-Character vector with the created filter or xml fragment
+Character vector with the created filter or xml fragment. However the \code{convert_bbox} returns a numeric vector and the  \code{convert_points} returns a numeric matrix with two columns
 }
 \description{
 \itemize{
@@ -49,6 +66,7 @@ overwritten.
 \item The function \code{propeq_xml} creates a \code{PropertyIsEqualTo} XML clause
 \item The function \code{bbox_xml} creates a \code{BBOX} XML clause
 \item The function \code{convert_bbox} convert a bbox from one CRS to another
+\item The function \code{convert_points} convert a set of points (in vector or matrix form) from one CRS to another
 }
 }
 \examples{
@@ -66,6 +84,7 @@ f2 <- build_filter(version='2.0.0',
        , bbox_xml("geometrie","EPSG:4326",bbox_4326)
      )
   )
+points_4326 <- convert_points(bbox_28992,"EPSG:28992","EPSG:4326")
 
 
 }

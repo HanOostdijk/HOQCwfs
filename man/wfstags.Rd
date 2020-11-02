@@ -16,7 +16,8 @@ bg(tag, value = "")
 
 \item{ta}{Character with additional information for start tag}
 
-\item{sep}{NULL for the default separator (set by \code{\link[=WFS_set_sep]{WFS_set_sep()}}) or required separator otherwise}
+\item{sep}{NULL for the default separator (set by \code{\link[=WFS_set_sep]{WFS_set_sep()}}) or required separator otherwise.
+Only one of consecutive separators will be kept}
 
 \item{value}{Character argument that will be inserted between start and end tag}
 }

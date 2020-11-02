@@ -118,16 +118,12 @@ Examples:
 [[back to contents]](#TOC) 
 
 ##### retrieve all features with all attributes and the geometry {#retrieve-all}
-```{r retrieve-all1,eval=F}
+```{r retrieve-all1}
 typename  <- 'topp:gidw_groenbomen'
 wfs1      <-  WFS_getfeature(typename)
 class(wfs1)
 print(wfs1,n=5) # show only first 5 features
 ```
-```{r retrieve-all2,echo=F}
-typename  <- 'topp:gidw_groenbomen'
-```
-TODO remove eval=F  
 
 [[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
@@ -135,6 +131,7 @@ TODO remove eval=F
 For non-complex queries the `cql_filter` can be used. The features for the tree `Prunus serrulata 'Kanzan'` can be queried with the following code. The number of quotes in a query is often confusing (for me at least): here a set of quotes is needed because `boom_omschrijf` is a character field and quotes around 'Kanzan' have to be duplicated. 
 
 ```{r retrieve-some-features}
+typename  <- 'topp:gidw_groenbomen'
 tree_name <- "Prunus serrulata ''Kanzan''"  
 tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
 print(tree_exp)
@@ -147,6 +144,7 @@ print(wfs2,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 When we are only interested in the 'omschrijvingen' (descriptions) fields we can add the `propertyname` argument to request the fields `boom_omschrijf` and `objec_omschrijf`. Note that the `id` and `geometry` fields are always included.
 
 ```{r retrieve-attributes}
+typename  <- 'topp:gidw_groenbomen'
 tree_name <- "Prunus serrulata ''Kanzan''"  
 tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
 fields    <- 'boom_omschrijf,objec_omschrijf'
@@ -159,6 +157,10 @@ print(wfs3,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 If we want to know beforehand the number of features that a query would return we can add the `resultType=hits` argument:
 
 ```{r number-of-features}
+typename  <- 'topp:gidw_groenbomen'
+tree_name <- "Prunus serrulata ''Kanzan''"  
+tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
+fields    <- 'boom_omschrijf,objec_omschrijf'
   WFS_getfeature(typename,cql_filter=tree_exp,propertyname=fields,resultType='hits' )
 ```
 [[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
@@ -167,6 +169,10 @@ If we want to know beforehand the number of features that a query would return w
 In the output of the previous examples we saw that the coordinates in the geometry were denoted in the Coordinate Reference System (CRS) that is used in the Netherlands: 'Amersfoort / RD New' also known as 'EPSG:28992'. If we want to have these coordinates denoted in the more commonly used 'WGS 84' (EPSG:4326) in terms of longitude and latitude we can add the `srsName` argument. SRS ([Spatial Reference System](https://en.wikipedia.org/wiki/Spatial_reference_system)) is a synonym for CRS.
 
 ```{r change-crs}
+typename  <- 'topp:gidw_groenbomen'
+tree_name <- "Prunus serrulata ''Kanzan''"  
+tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
+fields    <- 'boom_omschrijf,objec_omschrijf'
 wfs4      <-  WFS_getfeature(typename,cql_filter=tree_exp,propertyname=fields,srsName='EPSG:4326' )
 print(wfs4,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
@@ -176,6 +182,10 @@ print(wfs4,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 With the `startindex` and `maxfeatures` (1.1.0) or `count` (2.0.0) argument a subset of a query is produced. The `WFS__getfeature` function will use the correct version. By adding the `verbose=T` clause the generated request url will be displayed so that you can verify this. Notice that `startIndex=2` indicates that the first feature to be retrieved is number 3. In other words `startIndex` indicates the number of records to skip.
 
 ```{r retrieve-subset1,eval=F}
+typename  <- 'topp:gidw_groenbomen'
+tree_name <- "Prunus serrulata ''Kanzan''"  
+tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
+fields    <- 'boom_omschrijf,objec_omschrijf'
 wfs5a     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6,
                              propertyname=fields,srsName='EPSG:4326'
                              ,verbose=T,version='1.1.0' )
@@ -193,6 +203,10 @@ print(wfs5a,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
 
 ```{r retrieve-subset4,eval=F}
+typename  <- 'topp:gidw_groenbomen'
+tree_name <- "Prunus serrulata ''Kanzan''"  
+tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
+fields    <- 'boom_omschrijf,objec_omschrijf'
 wfs5b     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6,
                              propertyname=fields,srsName='EPSG:4326'
                              ,verbose=T,version='2.0.0' )
@@ -218,6 +232,8 @@ bbox_wgs84 <- c(4.860793, 52.313319, 4.861587, 52.316493 )
 bbox_28992 <- convert_bbox(bbox_wgs84,'EPSG:4326','EPSG:28992')  
 
 (bbox_spec <- glue::glue_collapse(bbox_28992,sep=','))
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
 wfs6a      <-  WFS_getfeature(typename,bbox=bbox_spec,
                              propertyname=fields )
 print(wfs6a,n=5,digits=5)
@@ -230,9 +246,12 @@ print(wfs6b,n=5,digits=5)
 [[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ##### retrieve features in a bounding box with additional filtering {#retrieve_boundingbox-cqlfilter}
-A combination of `cql_filter=` or `filter=` with `bbox=` is not allowed. In that case the bbox filtering has to be included in the `cql_filter=` or `filter=` construct. E.g. (and note the quotes around `EPSG:4326` where these were not necessary in the `bbox=` case) :
+A combination of `cql_filter=` or `filter=` with `bbox=` is not allowed. In that case the bbox filtering has to be included in the `cql_filter=` or `filter=` construct. First we show this for the `cql_filter=` construct.  
+Note the quotes around `EPSG:4326` that were not necessary in the `bbox=` case.
 
-```{r retrieve_boundingbox-cqlfilter}
+```{r retrieve-boundingbox-cqlfilter}
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
 tree_name <- "Alnus glutinosa ''Laciniata''"  
 tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
 bbox_spec <- glue::glue_collapse(bbox_28992,sep=',')
@@ -248,6 +267,40 @@ wfs7b      <-  WFS_getfeature(typename,cql_filter=cql_spec,
 print(wfs7b,n=5,digits=5)
 ```
 
-[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+Instead of `cql_filter=` we can also use `filter=` . In that case we have to specify the query in xml terms. To do this we can use the `build_filter` with the `fg` and `bg` functions. In the `xml_query1` filter we specify the filter in the default CRS; when we use it in `wfs7c` we specify that we want the coordinates in longitude/latitude (EPSG:4326). In `xml_query2` and `wfs7d` we do it the other way around.
 
+```{r retrieve-buildfilter}
+xml_query1=build_filter(version='1.1.0',
+     fg("And"
+           , propeq_xml('topp:boom_omschrijf',"Alnus glutinosa 'Laciniata'")
+           , bbox_xml("geometrie","EPSG:28992",bbox_28992)
+         )
+  )
+cat(xml_query1)
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
+wfs7c    <-  WFS_getfeature(typename
+             ,version='1.1.0'
+             ,filter=xml_query1
+             ,propertyname=fields
+             ,srsName='EPSG:4326')
+print(wfs7c,n=5,digits=5)
+
+xml_query2=build_filter(version='2.0.0',
+     fg("And"
+           , propeq_xml('topp:boom_omschrijf',"Alnus glutinosa 'Laciniata'")
+           , bbox_xml("geometrie","EPSG:4326",bbox_wgs84)
+         )
+  )
+cat(xml_query2)
+wfs7d    <-  WFS_getfeature(typename
+             ,version='2.0.0'
+             ,filter=xml_query2
+             ,propertyname=fields
+             ,srsName='EPSG:28992')
+print(wfs7d,n=5,digits=5)
+
+```
+
+[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
