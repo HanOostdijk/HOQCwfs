@@ -139,86 +139,138 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
    sf::st_coordinates(x)[,c('X','Y')]
  }
 
+#' Creates the description in XML format of a point, linestring or polygon
+#'
+#' Can be used in [build_filter()] or [spat_xml()]
+#'
+#' @param sptype Character string with the type of spatial feature. One of `point`, `linestring` or `polygon` (case insensitive)
+#' @param crs_in Character string with the Coordinate Reference System
+#' @param coords A numeric vector of even length with the coordinates of the feature or in case of a polygon a list of
+#'  such vectors containing the outer coordinates and optionally the coordinates of holes.
+#'  Instead of a vector also a two-column matrix can be specified.
+#' @param version Character string with the WFS request version
+#' @param sep Character string with separator (to be used to split outer from inner polygons). Useful for printouts of query strings.
+#' @return Character vector with the created xml fragment
 #' @export
-#' @rdname wfsfilteraux
- spat_feature <- function (sptype, crs_in, coords, version = WFS_get_version()) {
+#' @examples
+#' \dontrun{
+#'  spat_feature('point','EPSG:28992', point_coords)
+#'  spat_feature('Polygon','EPSG:28992',list(outer_coords,hole_coords))
+#' }
+ spat_feature <- function (sptype, crs_in, coords,
+                           version = WFS_get_version(),
+                           sep = WFS_get_sep()) {
   if (!(version %in% c('1.1.0', '2.0.0')))
     return("only version '1.1.0' and '2.0.0' are allowed")
+
   sptype1 <- tolower(sptype)
-  if (! is.matrix(coords)){
-  coords1 <- matrix(coords,ncol=2,byrow=T)
-  } else {
-  coords1 <- coords
-  }
-  if (version == '1.1.0') {
-    sep1 = ',' ; sep2= ' '
-  } else {
-    sep1 = ' ' ; sep2= ' '
-  }
-  coords1c <- paste(apply(coords1, 1,
-                         function(x) paste(x,collapse=',')),collapse=' ')
-  coords1b <- paste(apply(coords1, 1,
-                         function(x) paste(x,collapse=' ')),collapse=' ')
   if (sptype1 == 'point') {
     if (version == '1.1.0') {
       fg1 = fg("gml:Point"
         , fg('gml:coordinates'
-           , coords1c
+           , mat2char(coords, sep = ',')
            , ta = 'decimal="." cs="," ts=" "')
         , ta = glue::glue('srsName = "{crs_in}"')
         )
     } else {
-
+      fg1 = fg("gml:Point"
+        , fg('gml:pos'
+           , mat2char(coords, sep = ' ') )
+        , ta = glue::glue('srsName = "{crs_in}"')
+        )
     }
   } else if (sptype1 == 'linestring') {
     if (version == '1.1.0') {
       fg1 = fg("gml:LineString"
         , fg('gml:coordinates'
-           , coords1c
+           , mat2char(coords, sep = ',')
            , ta = 'decimal="." cs="," ts=" "')
         , ta = glue::glue('srsName = "{crs_in}"')
         )
     } else {
-
+      fg1 = fg("gml:LineString"
+        , fg('gml:posList'
+           , mat2char(coords, sep = ' ') )
+        , ta = glue::glue('srsName = "{crs_in}"')
+        )
     }
 
     } else if (sptype1 == 'polygon') {
-    if (version == '1.1.0') {
-      fg1 = fg("gml:Polygon"
-        # , fg('gml:outerBoundaryIs'
-        #   , fg("gml:LinearRing"
-        #    , fg('gml:coordinates'
-        #    , coords1c
-        #    , ta = 'decimal="." cs="," ts=" "')
-        # )
-        # )
-         , fg('gml:exterior'
-          , fg("gml:LinearRing"
-          , fg("gml:posList"
-            , coords1b
-            )
-          )
-        )
-        , ta = glue::glue('srsName = "{crs_in}"')
-      )
-    } else {
-      fg1 = fg("gml:Polygon"
-        , fg('gml:exterior'
-          , fg("gml:posList"
-            , coords1b
-            )
-        )
-        , ta = glue::glue('srsName = "{crs_in}"')
+    poslist = mat2char(coords, sep = ' ')
+    fg2 = create_pol(poslist,sep=sep)
+    fg1 = fg("gml:Polygon"
+            , fg2
+            , ta = glue::glue('srsName = "{crs_in}"')
       )
     }
-  }
   fg1
  }
 
+  mat2char <- function(coords, sep = ',') {
 
+    mat2char2 <- function(coords, sep = ',') {
+      if (!is.matrix(coords)) {
+        coords1 <- matrix(coords, ncol = 2, byrow = T)
+      } else {
+        coords1 <- coords
+      }
+      a <- purrr::array_branch(coords1, 1)
+      b <- purrr::map(a,  ~ paste(., collapse = sep))
+      paste(b, collapse = ' ')
+    }
+
+    if (is.list(coords)) {
+      coords <- purrr::map(coords,  ~ mat2char2(., sep = sep))
+    } else
+      coords <- mat2char2(coords, sep = sep)
+  }
+
+   create_pol <- function (poslist,sep=sep) {
+    x <- purrr::imap(poslist,  function (x, ix) {
+      if (ix == 1)
+        tiepe = 'gml:exterior'
+      else
+        tiepe = 'gml:interior'
+      fg(tiepe
+         , fg("gml:LinearRing"
+              , fg("gml:posList"
+                   , x)))
+    })
+    paste(x, collapse = sep)
+  }
+
+
+
+#' Creates the spatial part of a filter in XML format
+#'
+#' Can be used to create in XML format the spatial part of spatial operators such as
+#' `Disjoint`, `Equals`, `DWithin`, `Beyond`, `Intersects`, `Touches`, `Crosses`, `Within`,
+#'  `Contains`, `Overlaps` and `BBOX` .
+#'
+#' @param gemprop Character string with the name of the geometric field
+#' @param feature Character with XML description of feature. Description can be result of [spat_feature()]
+#' @param distance Number scalar with distance for `DWithin` operator. Unit given by argument `units`
+#' @param version Character string with the WFS request version
+#' @param spat_fun  Character string with the name of the spatial operator
+#' @param units Character string indicating the units of the argument `distance`
+#' @return Character vector with the created xml fragment
 #' @export
-#' @rdname wfsfilteraux
- spat_xml <- function (gemprop, feature, distance=NULL, version = WFS_get_version(),spat_fun='DWithin',units='meters') {
+#' @examples
+#' \dontrun{
+#' spat_xml('geometrie',
+#'       spat_feature('point','EPSG:28992', point_coords),
+#'              50) # filters features within 59 meters of point
+#' spat_xml('geometrie',
+#'        spat_feature('Polygon','EPSG:28992',list(outer_coords,hole_coords)),
+#'       spat_fun='Intersects') # filters features intersecting polygon with hole
+#' }
+
+ spat_xml <- function (gemprop,
+                       feature,
+                       distance=NULL,
+                       version = WFS_get_version(),
+                       spat_fun='DWithin',
+                       units='meters') {
   if (!(version %in% c('1.1.0', '2.0.0')))
     return("only version '1.1.0' and '2.0.0' are allowed")
   if (!is.null(distance))

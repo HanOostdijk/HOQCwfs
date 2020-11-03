@@ -6,8 +6,6 @@
 \alias{bbox_xml}
 \alias{convert_bbox}
 \alias{convert_points}
-\alias{spat_feature}
-\alias{spat_xml}
 \alias{wfsfilteraux}
 \title{Auxiliary functions to create filters}
 \usage{
@@ -20,17 +18,6 @@ bbox_xml(gemprop, crs_in, bbox_coords, version = WFS_get_version())
 convert_bbox(coords, crs_in, crs_out)
 
 convert_points(coords, crs_in, crs_out)
-
-spat_feature(sptype, crs_in, coords, version = WFS_get_version())
-
-spat_xml(
-  gemprop,
-  feature,
-  distance = NULL,
-  version = WFS_get_version(),
-  spat_fun = "DWithin",
-  units = "meters"
-)
 }
 \arguments{
 \item{...}{XML elements to be added to filter}

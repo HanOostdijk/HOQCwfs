@@ -70,12 +70,12 @@ expect_equal(f4c,f4d)
 
 test_that("spat functions checks", {
    context("spat functions checks")
-  # version 1.1.0 point
 
+  point_test <- function (version){ #DWithin
 coords    <- c(119103.4, 480726.0)
 my_point  <- sf::st_sfc(sf::st_point(coords),crs='EPSG:28992')
 my_coords <- sf::st_coordinates(my_point)[,c('X','Y')]
-xml_query <- build_filter(version='1.1.0',
+xml_query <- build_filter(version=version,
      spat_xml('geometrie',
               spat_feature('point','EPSG:28992',my_coords),
               50)
@@ -83,28 +83,32 @@ xml_query <- build_filter(version='1.1.0',
 typename  <- 'topp:gidw_groenbomen'
 fields    <- 'boom_omschrijf,objec_omschrijf'
 f5        <-  WFS_getfeature(typename
-             ,version='1.1.0'
+             ,version=version
              ,filter=xml_query
              ,propertyname=fields)
 expect_true(dim(f5)[1]>1)
 expect_equal(dim(f5)[2],4)
 expect_true(all(
      sf::st_distance(f5,my_point,by_element=T)<=units::set_units(50,'m')
-     ))
+))
+  }
+  point_test('1.1.0')
+  point_test('2.0.0')
 
-# version 1.1.0 linestring
-
+  linestring_test <- function (version){  #DWithin
 coords_wgs84 <- c( 4.86, 52.31, 4.86, 52.316, 4.867, 52.316)
 coords       <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992")
 my_line  <- sf::st_sfc(sf::st_linestring(coords),crs='EPSG:28992')
 my_coords <- sf::st_coordinates(my_line)[,c('X','Y')]
-xml_query <- build_filter(version='1.1.0',
-     spat_xml('geometrie',spat_feature('LineString','EPSG:28992',my_coords),50)
+xml_query <- build_filter(version=version,
+     spat_xml('geometrie',
+              spat_feature('LineString','EPSG:28992',my_coords),
+              50)
   )
 typename  <- 'topp:gidw_groenbomen'
 fields    <- 'boom_omschrijf,objec_omschrijf'
 f6        <-  WFS_getfeature(typename
-             ,version='1.1.0'
+             ,version=version
              ,filter=xml_query
              ,propertyname=fields)
 expect_gte(dim(f6)[1],1)
@@ -113,21 +117,24 @@ expect_equal(dim(f6)[2],4)
 expect_true(all(
     sf::st_distance(f6,my_line,by_element=T)<=units::set_units(50,'m')
     ))
+  }
+  linestring_test('1.1.0')
+  linestring_test('2.0.0')
 
-# version 1.1.0 polygon
-
+  poly_test1 <- function (version){  #DWithin
 coords_wgs84 <- c( 4.86, 52.31, 4.86, 52.316, 4.867, 52.316, 4.86, 52.31)
 coords       <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992")
-# coords       <- round(coords,2)
 my_poly      <- sf::st_sfc(sf::st_polygon(list(coords)),crs='EPSG:28992')
 my_coords    <- sf::st_coordinates(my_poly)[,c('X','Y')]
-xml_query    <- build_filter(version='1.1.0',
-     spat_xml('geometrie',spat_feature('Polygon','EPSG:28992',my_coords),spat_fun='DWithin',50)
+xml_query    <- build_filter(version=version,
+     spat_xml('geometrie',
+              spat_feature('Polygon','EPSG:28992',list(my_coords)),
+              spat_fun='DWithin',50)
   )
 typename  <- 'topp:gidw_groenbomen'
 fields    <- 'boom_omschrijf,objec_omschrijf'
 f6        <-  WFS_getfeature(typename
-             ,version='1.1.0'
+             ,version=version
              ,filter=xml_query
              ,propertyname=fields)
 
@@ -137,21 +144,25 @@ expect_equal(dim(f6)[2],4)
 expect_true(all(
     sf::st_distance(f6,my_poly,by_element=T)<=units::set_units(50,'m')
     ))
+  }
 
-# version 1.1.0 polygon Intersects
+  poly_test1('1.1.0')
+  poly_test1('2.0.0')
 
+  poly_test2 <- function (version){  #Intersects
 coords_wgs84 <- c( 4.86, 52.31, 4.86, 52.316, 4.867, 52.316, 4.86, 52.31)
 coords       <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992")
-# coords       <- round(coords,2)
 my_poly      <- sf::st_sfc(sf::st_polygon(list(coords)),crs='EPSG:28992')
 my_coords    <- sf::st_coordinates(my_poly)[,c('X','Y')]
-xml_query    <- build_filter(version='1.1.0',
-     spat_xml('geometrie',spat_feature('Polygon','EPSG:28992',my_coords),spat_fun='Intersects')
+xml_query    <- build_filter(version=version,
+     spat_xml('geometrie',
+              spat_feature('Polygon','EPSG:28992',list(my_coords)),
+              spat_fun='Intersects')
   )
 typename  <- 'topp:gidw_groenbomen'
 fields    <- 'boom_omschrijf,objec_omschrijf'
 f7        <-  WFS_getfeature(typename
-             ,version='1.1.0'
+             ,version=version
              ,filter=xml_query
              ,propertyname=fields)
 
@@ -161,7 +172,42 @@ expect_equal(dim(f7)[2],4)
 expect_true(all(
     sf::st_distance(f7,my_poly,by_element=T)==units::set_units(0,'m')
     ))
+  }
 
+  poly_test2('1.1.0')
+  poly_test2('2.0.0')
+
+
+  poly_test3 <- function (version){  # Intersects with hole
+out_wgs84    <- c( 4.86, 52.31, 4.86, 52.316, 4.88, 52.316, 4.88, 52.31, 4.86, 52.31)
+out_28992    <- convert_points(out_wgs84,"EPSG:4326","EPSG:28992")
+in_wgs84    <- c( 4.87, 52.312, 4.87, 52.314, 4.875, 52.314, 4.875, 52.312, 4.87, 52.312)
+in_28992    <- convert_points(in_wgs84,"EPSG:4326","EPSG:28992")
+
+my_poly      <- sf::st_sfc(sf::st_polygon(list(out_28992,in_28992)),crs='EPSG:28992')
+xml_query    <- build_filter(version=version,
+     spat_xml('geometrie',
+              spat_feature('Polygon','EPSG:28992',list(out_28992,in_28992)),
+              spat_fun='Intersects')
+  )
+
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
+f8        <-  WFS_getfeature(typename
+             ,version=version
+             ,filter=xml_query
+             ,propertyname=fields)
+
+expect_gte(dim(f8)[1],1)
+expect_equal(dim(f8)[2],4)
+
+expect_true(all(
+    sf::st_distance(f8,my_poly,by_element=T)==units::set_units(0,'m')
+    ))
+  }
+
+  poly_test3('1.1.0')
+  poly_test3('2.0.0')
 
 
 })
