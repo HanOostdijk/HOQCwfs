@@ -155,13 +155,15 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
   } else {
     sep1 = ' ' ; sep2= ' '
   }
-  coords1 <- paste(apply(coords1, 1,
-                         function(x) paste(x,collapse=sep1)),collapse=sep2)
+  coords1c <- paste(apply(coords1, 1,
+                         function(x) paste(x,collapse=',')),collapse=' ')
+  coords1b <- paste(apply(coords1, 1,
+                         function(x) paste(x,collapse=' ')),collapse=' ')
   if (sptype1 == 'point') {
     if (version == '1.1.0') {
       fg1 = fg("gml:Point"
         , fg('gml:coordinates'
-           , coords1
+           , coords1c
            , ta = 'decimal="." cs="," ts=" "')
         , ta = glue::glue('srsName = "{crs_in}"')
         )
@@ -172,7 +174,7 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
     if (version == '1.1.0') {
       fg1 = fg("gml:LineString"
         , fg('gml:coordinates'
-           , coords1
+           , coords1c
            , ta = 'decimal="." cs="," ts=" "')
         , ta = glue::glue('srsName = "{crs_in}"')
         )
@@ -183,12 +185,19 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
     } else if (sptype1 == 'polygon') {
     if (version == '1.1.0') {
       fg1 = fg("gml:Polygon"
-        , fg('gml:outerBoundaryIs'
+        # , fg('gml:outerBoundaryIs'
+        #   , fg("gml:LinearRing"
+        #    , fg('gml:coordinates'
+        #    , coords1c
+        #    , ta = 'decimal="." cs="," ts=" "')
+        # )
+        # )
+         , fg('gml:exterior'
           , fg("gml:LinearRing"
-             , fg('gml:coordinates'
-           , coords1
-           , ta = 'decimal="." cs="," ts=" "')
-        )
+          , fg("gml:posList"
+            , coords1b
+            )
+          )
         )
         , ta = glue::glue('srsName = "{crs_in}"')
       )
@@ -196,7 +205,7 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
       fg1 = fg("gml:Polygon"
         , fg('gml:exterior'
           , fg("gml:posList"
-            , coords1
+            , coords1b
             )
         )
         , ta = glue::glue('srsName = "{crs_in}"')
@@ -231,6 +240,7 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
       spat_fun
       , bg("ValueReference", gemprop)
       , feature
+      , fg2
     )
   }
   return(fg1)

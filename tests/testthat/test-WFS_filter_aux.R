@@ -72,9 +72,6 @@ test_that("spat functions checks", {
    context("spat functions checks")
   # version 1.1.0 point
 
-# library(testthat)
-# library(HOQCwfs)
-
 coords    <- c(119103.4, 480726.0)
 my_point  <- sf::st_sfc(sf::st_point(coords),crs='EPSG:28992')
 my_coords <- sf::st_coordinates(my_point)[,c('X','Y')]
@@ -110,13 +107,61 @@ f6        <-  WFS_getfeature(typename
              ,version='1.1.0'
              ,filter=xml_query
              ,propertyname=fields)
-
-expect_equal(1,1)
 expect_gte(dim(f6)[1],1)
 expect_equal(dim(f6)[2],4)
 
 expect_true(all(
     sf::st_distance(f6,my_line,by_element=T)<=units::set_units(50,'m')
     ))
+
+# version 1.1.0 polygon
+
+coords_wgs84 <- c( 4.86, 52.31, 4.86, 52.316, 4.867, 52.316, 4.86, 52.31)
+coords       <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992")
+# coords       <- round(coords,2)
+my_poly      <- sf::st_sfc(sf::st_polygon(list(coords)),crs='EPSG:28992')
+my_coords    <- sf::st_coordinates(my_poly)[,c('X','Y')]
+xml_query    <- build_filter(version='1.1.0',
+     spat_xml('geometrie',spat_feature('Polygon','EPSG:28992',my_coords),spat_fun='DWithin',50)
+  )
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
+f6        <-  WFS_getfeature(typename
+             ,version='1.1.0'
+             ,filter=xml_query
+             ,propertyname=fields)
+
+expect_gte(dim(f6)[1],1)
+expect_equal(dim(f6)[2],4)
+
+expect_true(all(
+    sf::st_distance(f6,my_poly,by_element=T)<=units::set_units(50,'m')
+    ))
+
+# version 1.1.0 polygon Intersects
+
+coords_wgs84 <- c( 4.86, 52.31, 4.86, 52.316, 4.867, 52.316, 4.86, 52.31)
+coords       <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992")
+# coords       <- round(coords,2)
+my_poly      <- sf::st_sfc(sf::st_polygon(list(coords)),crs='EPSG:28992')
+my_coords    <- sf::st_coordinates(my_poly)[,c('X','Y')]
+xml_query    <- build_filter(version='1.1.0',
+     spat_xml('geometrie',spat_feature('Polygon','EPSG:28992',my_coords),spat_fun='Intersects')
+  )
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
+f7        <-  WFS_getfeature(typename
+             ,version='1.1.0'
+             ,filter=xml_query
+             ,propertyname=fields)
+
+expect_gte(dim(f7)[1],1)
+expect_equal(dim(f7)[2],4)
+
+expect_true(all(
+    sf::st_distance(f7,my_poly,by_element=T)==units::set_units(0,'m')
+    ))
+
+
 
 })
