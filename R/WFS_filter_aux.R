@@ -21,6 +21,8 @@
 #' @param coords Numeric vector with four elements indicating the bounding box (for `convert_bbox` ) or a numeric vector of even length
 #' or numeric matrix with two columns (for `convert_points` )
 #' @param propvalue Character string to filter with
+#' @param out_matrix Logical indicating that the output of  `convert_points` should be matrix
+#' @param keep_names Logical indicating that the output of `convert_points` keeps the column names when the input is a matrix
 #' @return Character vector with the created filter or xml fragment. However the `convert_bbox` returns a numeric vector and the  `convert_points` returns a numeric matrix with two columns
 #' @export
 #' @rdname wfsfilteraux
@@ -124,26 +126,54 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
 #' @rdname wfsfilteraux
 
  convert_bbox <- function (coords,crs_in,crs_out) {
+   if (!is.matrix(coords)) {
+     coords = matrix(coords, ncol = 2, byrow = T)
+     }
     mp_sfc <- sf::st_sfc(
-      sf::st_multipoint(matrix(coords,ncol=2,byrow=T)),crs=crs_in)
+      sf::st_multipoint(coords),crs=crs_in)
     sf::st_bbox(sf::st_transform(mp_sfc,crs=crs_out))
  }
 
 #' @export
 #' @rdname wfsfilteraux
- convert_points <- function (coords, crs_in, crs_out) {
-   if (!is.matrix(coords))
-     coords = matrix(coords, ncol = 2, byrow = T)
+ convert_points <- function (coords,
+                             crs_in,
+                             crs_out,
+                             out_matrix = T,
+                             keep_names = T) {
+   if (!is.matrix(coords)) {
+     was_vector <- T # apparently vector
+     coords <- matrix(coords, ncol = 2, byrow = T)
+   } else {
+     was_vector <- F
+     orgattr <- attributes(coords)
+   }
    mp_sfc <- sf::st_sfc(sf::st_multipoint(coords), crs = crs_in)
-   x <- sf::st_transform(mp_sfc, crs = crs_out)
-   sf::st_coordinates(x)[,c('X','Y')]
+   mp_sfc <- sf::st_transform(mp_sfc, crs = crs_out)
+   coords <- sf::st_coordinates(mp_sfc)[, c('X', 'Y')]
+   if (was_vector) {
+     if (out_matrix == F)
+       return (as.vector(t(coords)))
+     else {
+       dimnames(coords) <- NULL
+       return(coords)
+     }
+   } else {
+     if (keep_names)
+       attributes(coords) <- orgattr
+     else
+       dimnames(coords) <- NULL
+   }
+   coords
  }
 
-#' Creates the description in XML format of a point, linestring or polygon
+#' Creates the description in XML format of a point, linestring, polygon or envelope,
 #'
-#' Can be used in [build_filter()] or [spat_xml()]
+#' The coordinates have to be specified in the way done in the corresponding `sf` function:
+#' [sf::st_point()], [sf::st_linestring()], [sf::st_polygon()] or [sf::st_bbox()] (the latter for `envelope`). \cr
+#' The resulting XML fragment can be used in [build_filter()] or [spat_xml()]
 #'
-#' @param sptype Character string with the type of spatial feature. One of `point`, `linestring` or `polygon` (case insensitive)
+#' @param sptype Character string with the type of spatial feature. One of `envelope`, `point`, `linestring` or `polygon` (case insensitive)
 #' @param crs_in Character string with the Coordinate Reference System
 #' @param coords A numeric vector of even length with the coordinates of the feature or in case of a polygon a list of
 #'  such vectors containing the outer coordinates and optionally the coordinates of holes.
@@ -164,7 +194,27 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
     return("only version '1.1.0' and '2.0.0' are allowed")
 
   sptype1 <- tolower(sptype)
-  if (sptype1 == 'point') {
+  if (sptype1 == 'envelope') {
+    if (version == '1.1.0') {
+      fg1 = fg("gml:Envelope"
+       , fg('gml:coord'
+           , bg('gml:X', coords[1])
+           , bg('gml:Y', coords[2]))
+        , fg('gml:coord'
+           , bg('gml:X', coords[3])
+           , bg('gml:Y', coords[4]))
+        , ta = glue::glue('srsName = "{crs_in}"')
+        )
+    } else {
+      fg1 = fg("gml:Envelope"
+        , bg('gml:lowerCorner'
+           , mat2char(coords[1:2], sep = ' '))
+        , bg('gml:upperCorner'
+           , mat2char(coords[3:4], sep = ' '))
+        , ta = glue::glue('srsName = "{crs_in}"')
+        )
+    }
+  } else if (sptype1 == 'point') {
     if (version == '1.1.0') {
       fg1 = fg("gml:Point"
         , fg('gml:coordinates'
@@ -179,6 +229,7 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
         , ta = glue::glue('srsName = "{crs_in}"')
         )
     }
+
   } else if (sptype1 == 'linestring') {
     if (version == '1.1.0') {
       fg1 = fg("gml:LineString"
@@ -297,5 +348,43 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
   }
   return(fg1)
 }
+
+ # 1.1.0
+ #      <gml:MultiPoint srsName="EPSG:28992">
+ #      <gml:pointMember>
+ #      <gml:Point>
+ #      <gml:coordinates>119046.672886613,480357.101378884</gml:coordinates>
+ #      </gml:Point>
+ #      </gml:pointMember>
+ #      <gml:pointMember>
+ #      <gml:Point>
+ #      <gml:coordinates>119051.527375441,481024.670359463</gml:coordinates>
+ #      </gml:Point>
+ #      </gml:pointMember>
+ #      <gml:pointMember>
+ #      <gml:Point>
+ #      <gml:coordinates>119528.830631237,481021.22244286</gml:coordinates>
+ #      </gml:Point>
+ #      </gml:pointMember>
+ #      </gml:MultiPoint>
+
+ # 2.0.0
+ #   <gml:MultiPoint srsName="urn:ogc:def:crs:EPSG::28992" gml:id="mpoint200.geom.0">
+ #   <gml:pointMember>
+ #   <gml:Point gml:id="mpoint200.geom.0.0">
+ #   <gml:pos>119046.672886613 480357.101378884</gml:pos>
+ #   </gml:Point>
+ #   </gml:pointMember>
+ #   <gml:pointMember>
+ #   <gml:Point gml:id="mpoint200.geom.0.1">
+ #   <gml:pos>119051.527375441 481024.670359463</gml:pos>
+ #   </gml:Point>
+ #   </gml:pointMember>
+ #   <gml:pointMember>
+ #   <gml:Point gml:id="mpoint200.geom.0.2">
+ #   <gml:pos>119528.830631237 481021.22244286</gml:pos>
+ #   </gml:Point>
+ #   </gml:pointMember>
+ #   </gml:MultiPoint>
 
 

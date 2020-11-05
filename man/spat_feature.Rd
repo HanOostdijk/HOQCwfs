@@ -2,7 +2,7 @@
 % Please edit documentation in R/WFS_filter_aux.R
 \name{spat_feature}
 \alias{spat_feature}
-\title{Creates the description in XML format of a point, linestring or polygon}
+\title{Creates the description in XML format of a point, linestring, polygon or envelope,}
 \usage{
 spat_feature(
   sptype,
@@ -13,7 +13,7 @@ spat_feature(
 )
 }
 \arguments{
-\item{sptype}{Character string with the type of spatial feature. One of \code{point}, \code{linestring} or \code{polygon} (case insensitive)}
+\item{sptype}{Character string with the type of spatial feature. One of \code{envelope}, \code{point}, \code{linestring} or \code{polygon} (case insensitive)}
 
 \item{crs_in}{Character string with the Coordinate Reference System}
 
@@ -29,7 +29,9 @@ Instead of a vector also a two-column matrix can be specified.}
 Character vector with the created xml fragment
 }
 \description{
-Can be used in \code{\link[=build_filter]{build_filter()}} or \code{\link[=spat_xml]{spat_xml()}}
+The coordinates have to be specified in the way done in the corresponding \code{sf} function:
+\code{\link[sf:st]{sf::st_point()}}, \code{\link[sf:st]{sf::st_linestring()}}, \code{\link[sf:st]{sf::st_polygon()}} or \code{\link[sf:st_bbox]{sf::st_bbox()}} (the latter for \code{envelope}). \cr
+The resulting XML fragment can be used in \code{\link[=build_filter]{build_filter()}} or \code{\link[=spat_xml]{spat_xml()}}
 }
 \examples{
 \dontrun{

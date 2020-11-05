@@ -16,15 +16,44 @@ test_that("WFS_filter_aux checks", {
   # convert_points
  points_28992  <- c(119103, 480726, 119160, 481078)
  points_28992M <- matrix(points_28992,ncol=2,byrow = T)
- points_4326   <- convert_points(points_28992,"EPSG:28992","EPSG:4326")
- points_4326M  <- convert_points(points_28992M,"EPSG:28992","EPSG:4326")
- expect_identical( points_4326 ,points_4326M)
- a1 <- convert_points(points_4326,"EPSG:4326","EPSG:28992")
- a2 <- a1 ; dimnames(a2) <- NULL
- expect_equal(points_28992M,a2)
- expect_identical( dimnames(a1)[[2]]  ,c( "X", "Y"))
- a3 <- points_4326M ; dimnames(a3) <- NULL
- expect_equal(a3,matrix(bbox_4326,ncol=2,byrow = T))
+ # dimnames(points_28992M) <- list(NULL,c('myx','myy'))
+ points_4326T  <- convert_points(points_28992,"EPSG:28992","EPSG:4326",out_matrix = T)
+ points_4326F  <- convert_points(points_28992,"EPSG:28992","EPSG:4326",out_matrix = F)
+ points_4326MT  <- convert_points(points_28992M,"EPSG:28992","EPSG:4326",out_matrix = T)
+ points_4326MF  <- convert_points(points_28992M,"EPSG:28992","EPSG:4326",out_matrix = F)
+
+ logmat <- expand.grid(out_matrix=c(T,F),keep_names=c(T,F))
+
+ test_convert_points <- function(in_data, logmat) {
+   purrr::walk(seq(1, dim(logmat)[1]),
+               function(i) {
+                 out_matrix = logmat[i, 1]
+                 keep_names = logmat[i, 2]
+                 x <- convert_points(in_data,
+                     "EPSG:28992",
+                     "EPSG:4326",
+                     out_matrix = out_matrix,
+                     keep_names = keep_names)
+                 y <- convert_points(x,
+                     "EPSG:4326",
+                     "EPSG:28992",
+                     out_matrix = out_matrix,
+                     keep_names = keep_names)
+                 if (is.matrix(y) && (!is.matrix(in_data)))
+                   y = as.vector(t(y))
+                 if ( is.matrix(in_data) && (!is.null(dimnames(in_data)[2])) &&( keep_names == F))
+                   attributes(y) = attributes(in_data)
+                 expect_equal(in_data, y)
+               })
+ }
+
+ in_data  <- c(119103, 480726, 119160, 481078)
+ test_convert_points(in_data, logmat)
+ in_data2 <- matrix(in_data,ncol=2,byrow = T)
+ test_convert_points(in_data2, logmat)
+ in_data3 <- in_data2
+ dimnames(in_data3) <- list(NULL,c('myx','myy'))
+ test_convert_points(in_data3, logmat)
 
  # build_filter
 
@@ -94,6 +123,33 @@ expect_true(all(
   }
   point_test('1.1.0')
   point_test('2.0.0')
+
+
+  envelope_test <- function (version){  #DWithin
+coords_wgs84 <- c( 4.86, 52.31,  4.867, 52.316)
+coords       <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992",out_matrix=F)
+my_env  <- sf::st_as_sfc( convert_bbox(coords,crs_in='EPSG:28992',crs_out='EPSG:28992'))
+
+xml_query <- build_filter(version=version,
+     spat_xml('geometrie',
+              spat_feature('Envelope','EPSG:28992',coords ),
+              50)
+  )
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
+f5a        <-  WFS_getfeature(typename
+             ,version=version
+             ,filter=xml_query
+             ,propertyname=fields)
+expect_gte(dim(f5a)[1],1)
+expect_equal(dim(f5a)[2],4)
+
+expect_true(all(
+    sf::st_distance(f5a,my_env,by_element=T)<=units::set_units(50,'m')
+    ))
+  }
+  envelope_test('1.1.0')
+  envelope_test('2.0.0')
 
   linestring_test <- function (version){  #DWithin
 coords_wgs84 <- c( 4.86, 52.31, 4.86, 52.316, 4.867, 52.316)

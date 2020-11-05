@@ -17,7 +17,7 @@ bbox_xml(gemprop, crs_in, bbox_coords, version = WFS_get_version())
 
 convert_bbox(coords, crs_in, crs_out)
 
-convert_points(coords, crs_in, crs_out)
+convert_points(coords, crs_in, crs_out, out_matrix = T, keep_names = T)
 }
 \arguments{
 \item{...}{XML elements to be added to filter}
@@ -38,6 +38,10 @@ convert_points(coords, crs_in, crs_out)
 or numeric matrix with two columns (for \code{convert_points} )}
 
 \item{crs_out}{Character string with the name of the output crs (e.g. \code{"EPSG:28992"} )}
+
+\item{out_matrix}{Logical indicating that the output of  \code{convert_points} should be matrix}
+
+\item{keep_names}{Logical indicating that the output of \code{convert_points} keeps the column names when the input is a matrix}
 
 \item{tag}{Character with tag that will be used as both start and end tag}
 }
