@@ -2,8 +2,6 @@ test_that("WFS_getfeature checks", {
   # library(HOQCwfs)
   # library(testthat)
 
-  print('reached start of test')
-
   L1a <- list(a=1,a=2,b=3,a=4,c=5,b=6)
   L1b <- list(a=1,b=3,c=5)
   L1c <- list(a=4,b=6,c=5)
@@ -190,7 +188,5 @@ test_that("WFS_getfeature checks", {
   expect_true(all(
     sf::st_distance(wfs10a,my_point,by_element=T)<=units::set_units(50,'m')
     ))
-
-  print('reached end of test')
 
 })

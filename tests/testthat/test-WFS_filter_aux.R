@@ -13,22 +13,15 @@ test_that("WFS_filter_aux checks", {
  expect_equal( names(a1),c("xmin", "ymin", "xmax", "ymax"))
  expect_equal( sf::st_crs(a1)$input,"EPSG:28992")
 
-  # convert_points
- points_28992  <- c(119103, 480726, 119160, 481078)
- points_28992M <- matrix(points_28992,ncol=2,byrow = T)
- # dimnames(points_28992M) <- list(NULL,c('myx','myy'))
- points_4326T  <- convert_points(points_28992,"EPSG:28992","EPSG:4326",out_matrix = T)
- points_4326F  <- convert_points(points_28992,"EPSG:28992","EPSG:4326",out_matrix = F)
- points_4326MT  <- convert_points(points_28992M,"EPSG:28992","EPSG:4326",out_matrix = T)
- points_4326MF  <- convert_points(points_28992M,"EPSG:28992","EPSG:4326",out_matrix = F)
+ # convert_points
 
- logmat <- expand.grid(out_matrix=c(T,F),keep_names=c(T,F))
+ testmat <- expand.grid(out_matrix=c(T,F),keep_names=c(T,F))
 
- test_convert_points <- function(in_data, logmat) {
-   purrr::walk(seq(1, dim(logmat)[1]),
+ test_convert_points <- function(in_data, testmat) {
+   purrr::walk(seq(1, dim(testmat)[1]),
                function(i) {
-                 out_matrix = logmat[i, 1]
-                 keep_names = logmat[i, 2]
+                 out_matrix = testmat[i, 1]
+                 keep_names = testmat[i, 2]
                  x <- convert_points(in_data,
                      "EPSG:28992",
                      "EPSG:4326",
@@ -48,12 +41,30 @@ test_that("WFS_filter_aux checks", {
  }
 
  in_data  <- c(119103, 480726, 119160, 481078)
- test_convert_points(in_data, logmat)
+ test_convert_points(in_data, testmat)
  in_data2 <- matrix(in_data,ncol=2,byrow = T)
- test_convert_points(in_data2, logmat)
+ test_convert_points(in_data2, testmat)
  in_data3 <- in_data2
  dimnames(in_data3) <- list(NULL,c('myx','myy'))
- test_convert_points(in_data3, logmat)
+ test_convert_points(in_data3, testmat)
+
+ # create_coord
+
+orgsep <-WFS_get_sep()
+WFS_set_sep('')
+a <- create_coord(1:4,'pos',version='1.1.0')
+b <- create_coord(1:4,'poslist',version='1.1.0')
+c <- create_coord(1:4,'pos',version='2.0.0')
+d <- create_coord(1:4,'posli',version='2.0.0')
+a1 <- "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">1,2 3,4</gml:coordinates>"
+b1 <- "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">1,2 3,4</gml:coordinates>"
+c1 <- "<gml:pos decimal=\".\" cs=\",\" ts=\" \">1 2 3 4</gml:pos>"
+d1 <- "<gml:posList decimal=\".\" cs=\",\" ts=\" \">1 2 3 4</gml:posList>"
+expect_equal(a,a1)
+expect_equal(b,b1)
+expect_equal(c,c1)
+expect_equal(d,d1)
+WFS_set_sep(orgsep)
 
  # build_filter
 
