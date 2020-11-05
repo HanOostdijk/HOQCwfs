@@ -276,5 +276,35 @@ expect_true(all(
   poly_test3('1.1.0')
   poly_test3('2.0.0')
 
+  mp_test1 <- function (version){  # multipoint
+coords_wgs84 <- c( 4.86, 52.31, 4.86, 52.316, 4.88, 52.316)
+coords_28992 <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992")
+
+my_mp      <- sf::st_sfc(sf::st_multipoint(coords_28992),crs='EPSG:28992')
+xml_query    <- build_filter(version=version,
+     spat_xml('geometrie',
+              spat_feature('Multipoint','EPSG:28992',coords_28992),
+              spat_fun='DWithin',
+              50)
+  )
+
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
+f8        <-  WFS_getfeature(typename
+             ,version=version
+             ,filter=xml_query
+             ,propertyname=fields)
+
+expect_gte(dim(f8)[1],1)
+expect_equal(dim(f8)[2],4)
+
+expect_true(all(
+    sf::st_distance(f8,my_poly,by_element=T)==units::set_units(0,'m')
+    ))
+  }
+
+  poly_test3('1.1.0')
+  poly_test3('2.0.0')
+
 
 })

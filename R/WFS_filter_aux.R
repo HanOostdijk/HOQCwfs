@@ -195,25 +195,10 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
 
   sptype1 <- tolower(sptype)
   if (sptype1 == 'envelope') {
-    if (version == '1.1.0') {
       fg1 = fg("gml:Envelope"
-       , fg('gml:coord'
-           , bg('gml:X', coords[1])
-           , bg('gml:Y', coords[2]))
-        , fg('gml:coord'
-           , bg('gml:X', coords[3])
-           , bg('gml:Y', coords[4]))
+        , create_envelope(coords,version)
         , ta = glue::glue('srsName = "{crs_in}"')
-        )
-    } else {
-      fg1 = fg("gml:Envelope"
-        , bg('gml:lowerCorner'
-           , mat2char(coords[1:2], sep = ' '))
-        , bg('gml:upperCorner'
-           , mat2char(coords[3:4], sep = ' '))
-        , ta = glue::glue('srsName = "{crs_in}"')
-        )
-    }
+      )
   } else if (sptype1 == 'point') {
       fg1 = fg("gml:Point"
         , create_coord(coords,'pos',version)
@@ -232,7 +217,7 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
       )
   } else if (sptype1 == 'multipoint') {
     fg2 = create_mp(coords, 'pos', version, sep=sep)
-    fg1 = fg("gml::MultiPoint"
+    fg1 = fg("gml:MultiPoint"
             , fg2
             , ta = glue::glue('srsName = "{crs_in}"')
       )
@@ -240,59 +225,30 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
   fg1
  }
 
- # create_coord <-
- #   function(coords, coord_type, version = WFS_get_version()) {
- #
- #     create_coord1 <-
- #       function(coords, coord_type, version) { #inner function needed ?
- #         if (!(version %in% c('1.1.0', '2.0.0')))
- #           return("only version '1.1.0' and '2.0.0' are allowed")
- #         if (version == '1.1.0')
- #           fg1 <- fg('gml:coordinates'
- #                     , mat2char(coords, sep = ',')
- #                     , ta = 'decimal="." cs="," ts=" "')
- #         else {
- #           if (tolower(coord_type) == 'pos')
- #             coord_type <- 'gml:pos'
- #           else
- #             coord_type <- 'gml:posList'
- #           fg1 = fg(coord_type
- #                    , mat2char(coords, sep = ' ')
- #                    , ta = 'decimal="." cs="," ts=" "')
- #         }
- #         fg1
- #       }
- #
- #     if (is.list(coords)) {
- #       coords <- purrr::map(coords,  ~ create_coord1(., coord_type, version))
- #     } else
- #       coords <- create_coord1(coords, coord_type, version)
- #
- #   }
-
-
-
- # mat2char <- function(coords, sep = ',') {
- #
- #   mat2char2 <- function(coords, sep = ',') {
- #     if (!is.matrix(coords)) {
- #       coords1 <- matrix(coords, ncol = 2, byrow = T)
- #     } else {
- #       coords1 <- coords
- #     }
- #     a <- purrr::array_branch(coords1, 1)
- #     b <- purrr::map(a,  ~ paste(., collapse = sep))
- #     paste(b, collapse = ' ')
- #   }
- #
- #   if (is.list(coords)) {
- #     coords <- purrr::map(coords,  ~ mat2char2(., sep = sep))
- #   } else
- #     coords <- mat2char2(coords, sep = sep)
- # }
+ create_envelope <- function (coords, version) {
+   if (version == '1.1.0') {
+     paste(fg('gml:coord'
+              , bg('gml:X', coords[1])
+              , bg('gml:Y', coords[2]))
+           ,
+           fg('gml:coord'
+              , bg('gml:X', coords[3])
+              , bg('gml:Y', coords[4]))
+           ,
+           collapse = '')
+   } else {
+     paste(bg('gml:lowerCorner'
+              , mat2char(coords[1:2], sep = ' '))
+           ,
+           bg('gml:upperCorner'
+              , mat2char(coords[3:4], sep = ' '))
+           ,
+           collapse = '')
+   }
+ }
 
  create_mp <- function (coords, coord_type, version, sep) {
-   pos <- create_coord(coords, coord_type, version)
+   pos <- purrr::array_branch(coords, 1)
    x <- purrr::map(pos,  function (x) {
      fg("gml:pointMember"
         , fg("gml:Point"
@@ -304,11 +260,8 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
  create_pol <- function (coords, coord_type, version, sep = sep) {
    poslist <- create_coord(coords, coord_type, version )
    x <- purrr::imap(poslist,  function (x, ix) {
-     if (ix == 1){
-       # if (version == '1.1.0') tiepe = 'gml:outerBoundaryIs'
-       # else tiepe = 'gml:exterior'
+     if (ix == 1)
        tiepe = 'gml:exterior'
-       }
      else
        tiepe = 'gml:interior'
      fg(tiepe
@@ -318,8 +271,6 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
    })
    paste(x, collapse = sep)
  }
-
-
 
 #' Creates the spatial part of a filter in XML format
 #'
@@ -378,51 +329,6 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
   return(fg1)
 }
 
- # 1.1.0
- #      <gml:MultiPoint srsName="EPSG:28992">
- #      <gml:pointMember>
- #      <gml:Point>
- #      <gml:coordinates>119046.672886613,480357.101378884</gml:coordinates>
- #      </gml:Point>
- #      </gml:pointMember>
- #      <gml:pointMember>
- #      <gml:Point>
- #      <gml:coordinates>119051.527375441,481024.670359463</gml:coordinates>
- #      </gml:Point>
- #      </gml:pointMember>
- #      <gml:pointMember>
- #      <gml:Point>
- #      <gml:coordinates>119528.830631237,481021.22244286</gml:coordinates>
- #      </gml:Point>
- #      </gml:pointMember>
- #      </gml:MultiPoint>
-
- # 2.0.0
- #   <gml:MultiPoint srsName="urn:ogc:def:crs:EPSG::28992" gml:id="mpoint200.geom.0">
- #   <gml:pointMember>
- #   <gml:Point gml:id="mpoint200.geom.0.0">
- #   <gml:pos>119046.672886613 480357.101378884</gml:pos>
- #   </gml:Point>
- #   </gml:pointMember>
- #   <gml:pointMember>
- #   <gml:Point gml:id="mpoint200.geom.0.1">
- #   <gml:pos>119051.527375441 481024.670359463</gml:pos>
- #   </gml:Point>
- #   </gml:pointMember>
- #   <gml:pointMember>
- #   <gml:Point gml:id="mpoint200.geom.0.2">
- #   <gml:pos>119528.830631237 481021.22244286</gml:pos>
- #   </gml:Point>
- #   </gml:pointMember>
- #   </gml:MultiPoint>
-
- # x= spat_feature ('multipoint','EPSG:28992', 1:6,
- #                           version = '1.1.0',
- #                           sep = WFS_get_sep())
- # cat(x)
-
-
-
  mat2char <- function(coords, sep = ',') {
      if (!is.matrix(coords)) {
        coords1 <- matrix(coords, ncol = 2, byrow = T)
@@ -434,34 +340,28 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
      paste(b, collapse = ' ')
    }
 
-
- x2 <-
-   function(coords, coord_type, version) {
-     if (version == '1.1.0')
-       fg1 <- fg('gml:coordinates'
-                 , mat2char(coords, sep = ',')
-                 , ta = 'decimal="." cs="," ts=" "')
-     else {
-       if (tolower(coord_type) == 'pos')
-         coord_type <- 'gml:pos'
-       else
-         coord_type <- 'gml:posList'
-       fg1 = fg(coord_type
-                , mat2char(coords, sep = ' ')
-                , ta = 'decimal="." cs="," ts=" "')
-     }
-     fg1
-   }
-
-
- create_coord <- function (coords, coord_type, version = WFS_get_version()) {
-   if (!(version %in% c('1.1.0', '2.0.0')))
+ create_coord <-
+   function (coords, coord_type, version = WFS_get_version()) {
+     if (!(version %in% c('1.1.0', '2.0.0')))
        return("only version '1.1.0' and '2.0.0' are allowed")
-   if (is.list(coords))
-     purrr::map(coords,~create_coord(.,coord_type, version))
-   else {
-     if (!is.matrix(coords))
-       coords <- matrix(coords, ncol = 2, byrow = T)
-     x2(coords,coord_type, version)
+     if (is.list(coords))
+       purrr::map(coords,  ~ create_coord(., coord_type, version))
+     else {
+       if (!is.matrix(coords))
+         coords <- matrix(coords, ncol = 2, byrow = T)
+       if (version == '1.1.0')
+         fg1 <- fg('gml:coordinates'
+                   , mat2char(coords, sep = ',')
+                   , ta = 'decimal="." cs="," ts=" "')
+       else {
+         if (tolower(coord_type) == 'pos')
+           coord_type <- 'gml:pos'
+         else
+           coord_type <- 'gml:posList'
+         fg1 = fg(coord_type
+                  , mat2char(coords, sep = ' ')
+                  , ta = 'decimal="." cs="," ts=" "')
+       }
+       fg1
+     }
    }
- }
