@@ -20,7 +20,8 @@ WFS_default_sep     <- "\n"
 #' Note that these values are used as the default values for the various functions. They can always be overwritten there.
 #'
 #' @param url NULL for the default url ( **`r WFS_default_url`** ) or the url of the WFS service otherwise
-#' @return Character vector (invisible for the set version) with the url or version to be used
+#' @return Character vector with for the Get the current url, version or separator.
+#' In case of the Set the old version is returned.
 #' @export
 #' @rdname wfsinit
 #' @examples
@@ -29,11 +30,12 @@ WFS_default_sep     <- "\n"
 #' }
 
 WFS_set_url <- function (url=NULL) {
+  org <- .WFS_options$url
   if (is.null(url)) {
     url = WFS_default_url
   }
   .WFS_options$url = url
-  invisible(url)
+  invisible(org)
 }
 
 #' @export
@@ -42,9 +44,10 @@ WFS_set_url <- function (url=NULL) {
 #' WFS_get_url()
 
 WFS_get_url <- function () {
-  url = .WFS_options$url
+  url <- .WFS_options$url
   if (is.null(url)) {
-    url = WFS_set_url()
+   .WFS_options$url <- WFS_default_url
+		url <- .WFS_options$url
   }
   url
 }
@@ -60,13 +63,14 @@ WFS_get_url <- function () {
 WFS_set_version <- function (version=NULL) {
 	if ( (!is.null(version)) && (! (version %in% c('1.1.0','2.0.0') ) ) ) {
 	  warning("version ",version," is not supported: ",WFS_default_version," will be used")
-		version = WFS_default_version
+		version <- WFS_default_version
 	}
+  org <- .WFS_options$version
 	if (is.null(version)  ) {
-		version = WFS_default_version
+		version <- WFS_default_version
 	}
-	.WFS_options$version = version
-	invisible(version)
+	.WFS_options$version <- version
+	invisible(org)
 }
 
 #' @export
@@ -75,9 +79,10 @@ WFS_set_version <- function (version=NULL) {
 #' WFS_get_version()
 
 WFS_get_version <- function () {
-	version = .WFS_options$version
+	version <- .WFS_options$version
 	if (is.null(version)) {
-		version = WFS_set_version()
+		.WFS_options$version <- WFS_default_version
+		version <- .WFS_options$version
 	}
 	version
 }
@@ -91,11 +96,12 @@ WFS_get_version <- function () {
 
 
 WFS_set_sep <- function (sep=NULL) {
+  org = .WFS_options$sep
 	if (is.null(sep)) {
-		sep = WFS_default_sep
+		sep <- WFS_default_sep
 	}
-	.WFS_options$sep = sep
-	invisible(sep)
+	.WFS_options$sep <- sep
+	invisible(org)
 }
 
 #' @export
@@ -104,9 +110,10 @@ WFS_set_sep <- function (sep=NULL) {
 #' WFS_get_sep()
 
 WFS_get_sep <- function () {
-	sep = .WFS_options$sep
+	sep <- .WFS_options$sep
 	if (is.null(sep)) {
-		sep = WFS_set_sep()
+		.WFS_options$sep <- WFS_default_sep
+		sep <- .WFS_options$sep
 	}
 	sep
 }

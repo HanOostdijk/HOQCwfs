@@ -29,7 +29,8 @@ WFS_get_sep()
 \item{sep}{NULL for the default ( \strong{\verb{\\n}} ) separator or an alternative sep (e.g. \code{''}  ) otherwise}
 }
 \value{
-Character vector (invisible for the set version) with the url or version to be used
+Character vector with for the Get the current url, version or separator.
+In case of the Set the old version is returned.
 }
 \description{
 The \code{url}  determines the location of the WFS service. If the \code{url} is not specified before a \code{HOQCwfs} function is used,

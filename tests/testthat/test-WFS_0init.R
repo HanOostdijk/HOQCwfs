@@ -4,13 +4,16 @@ test_that("WFS_init checks", {
   expect_equal(length(ls(envir = HOQCwfs:::.WFS_options)), 1)
   expect_equal(HOQCwfs:::.WFS_options$url, x)
   t = " this is a test"
-  x = WFS_set_url(t)
+  y = WFS_set_url(t)
   expect_equal(length(ls(envir = HOQCwfs:::.WFS_options)), 1)
-  expect_equal(t, x)
+  expect_equal(y, x)
   x = WFS_get_url()
   expect_equal(t, x)
   expect_equal(length(ls(envir = HOQCwfs:::.WFS_options)), 1)
   x = WFS_set_url()
+  expect_equal(t, x)
+  x = WFS_get_url()
+
   y = WFS_get_version()
   expect_equal(length(ls(envir = HOQCwfs:::.WFS_options)), 2)
   expect_equal(names(HOQCwfs:::.WFS_options), c('url','version'))
@@ -32,11 +35,13 @@ test_that("WFS_init checks", {
   expect_equal(length(ls(envir = HOQCwfs:::.WFS_options)), 3)
   expect_equal(HOQCwfs:::.WFS_options$sep, z)
   t = " this is a test"
-  z = WFS_set_sep(t)
+  w = WFS_set_sep(t)
+  expect_equal(w, z)
   expect_equal(length(ls(envir = HOQCwfs:::.WFS_options)), 3)
-  expect_equal(t, z)
+  w = WFS_set_sep()
+  expect_equal(t, w)
   z = WFS_set_sep(NULL)
-  expect_equal(HOQCwfs:::.WFS_options$sep, z)
+  expect_equal(HOQCwfs:::.WFS_options$sep, z) ##
   expect_equal(HOQCwfs:::.WFS_options$sep, HOQCwfs:::WFS_default_sep)
 
 })
