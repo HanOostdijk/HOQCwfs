@@ -221,7 +221,24 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
             , fg2
             , ta = glue::glue('srsName = "{crs_in}"')
       )
+  } else if (sptype1 == 'multilinestring') {
+    if (version == '1.1.0') gmltype = 'gml:MultiLineString'
+    else gmltype = 'gml:MultiCurve'
+    fg2 = create_mls(coords, 'poslist', version, sep=sep)
+    fg1 = fg( gmltype
+            , fg2
+            , ta = glue::glue('srsName = "{crs_in}"')
+      )
+  } else if (sptype1 == 'multipolygon') {
+    if (version == '1.1.0') gmltype = 'gml:MultiPolygon'
+    else gmltype = 'gml:MultiSurface'
+    fg2 = create_mpol(coords, 'poslist', version, sep=sep)
+    fg1 = fg( gmltype
+            , fg2
+            , ta = glue::glue('srsName = "{crs_in}"')
+      )
     }
+
   fg1
  }
 
@@ -257,8 +274,24 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
    paste(x, collapse = sep)
  }
 
+ create_mls <- function (coords, coord_type, version, sep) {
+   pos <- purrr::array_branch(coords, 1)
+   if (version == '1.1.0') gmltype = 'gml:lineStringMember'
+   else gmltype = 'gml:curveMember'
+   x <- purrr::map(pos,  function (x) {
+     fg(gmltype
+        , fg("gml:LineString"
+             , create_coord(x, coord_type, version)))
+   })
+   paste(x, collapse = sep)
+ }
+
  create_pol <- function (coords, coord_type, version, sep = sep) {
-   poslist <- create_coord(coords, coord_type, version )
+   poslist <- create_coord(coords, coord_type, version)
+   create_pol2(poslist,sep)
+ }
+
+ create_pol2 <- function(poslist,sep) {
    x <- purrr::imap(poslist,  function (x, ix) {
      if (ix == 1)
        tiepe = 'gml:exterior'
@@ -266,11 +299,23 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
        tiepe = 'gml:interior'
      fg(tiepe
         , fg("gml:LinearRing"
-             , x)
-        )
+             , x))
    })
    paste(x, collapse = sep)
  }
+
+  create_mpol <- function (coords, coord_type, version, sep = sep) {
+   poslist <- create_coord(coords, coord_type, version )
+   if (version == '1.1.0') gmltype = 'gml:polygonMember'
+    else gmltype = 'gml:surfaceMember'
+   x <- purrr::map(poslist,  function (x) {
+     fg(gmltype
+        , fg('gml:Polygon'
+             , create_pol2(x,sep)))
+   })
+   paste(x, collapse = sep)
+ }
+
 
 #' Creates the spatial part of a filter in XML format
 #'

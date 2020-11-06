@@ -290,21 +290,104 @@ xml_query    <- build_filter(version=version,
 
 typename  <- 'topp:gidw_groenbomen'
 fields    <- 'boom_omschrijf,objec_omschrijf'
-f8        <-  WFS_getfeature(typename
+f9        <-  WFS_getfeature(typename
              ,version=version
              ,filter=xml_query
              ,propertyname=fields)
 
-expect_gte(dim(f8)[1],1)
-expect_equal(dim(f8)[2],4)
+expect_gte(dim(f9)[1],1)
+expect_equal(dim(f9)[2],4)
 
 expect_true(all(
-    sf::st_distance(f8,my_poly,by_element=T)==units::set_units(0,'m')
+    sf::st_distance(f9,my_mp,by_element=T)<=units::set_units(50,'m')
     ))
   }
 
-  poly_test3('1.1.0')
-  poly_test3('2.0.0')
+  mp_test1('1.1.0')
+  mp_test1('2.0.0')
+
+
+  mls_test1 <- function (version){  # multipoint
+coords_wgs84a <- c( 4.86, 52.31, 4.86, 52.316, 4.88, 52.316)
+coords_28992a <- convert_points(coords_wgs84a,"EPSG:4326","EPSG:28992")
+coords_wgs84b <- c( 4.87, 52.31, 4.87, 52.306, 4.89, 52.316)
+coords_28992b <- convert_points(coords_wgs84b,"EPSG:4326","EPSG:28992")
+coords_28992 <- list(coords_28992a,coords_28992b)
+
+my_mls      <- sf::st_sfc(sf::st_multilinestring(coords_28992),crs='EPSG:28992')
+# sf::st_write(my_mls,'mls110.gml')
+# sf::st_write(my_mls,'mls200.gml',dataset_options = 'FORMAT=GML3.2')
+
+xml_query    <- build_filter(version=version,
+     spat_xml('geometrie',
+              spat_feature('MultiLinestring','EPSG:28992',coords_28992),
+              spat_fun='DWithin',
+              50)
+  )
+
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
+f10        <-  WFS_getfeature(typename
+             ,version=version
+             ,filter=xml_query
+             ,propertyname=fields)
+
+expect_gte(dim(f10)[1],1)
+expect_equal(dim(f10)[2],4)
+
+expect_true(all(
+    sf::st_distance(f10,my_mls,by_element=T)<=units::set_units(50,'m')
+    ))
+  }
+
+  mls_test1('1.1.0')
+  mls_test1('2.0.0')
+
+
+  mpoly_test1 <- function (version){  # multipolygonwith hole Intersects
+out_wgs84    <- c( 4.86, 52.31, 4.86, 52.316, 4.88, 52.316, 4.88, 52.31, 4.86, 52.31)
+out_28992    <- convert_points(out_wgs84,"EPSG:4326","EPSG:28992")
+in_wgs84    <- c( 4.87, 52.312, 4.87, 52.314, 4.875, 52.314, 4.875, 52.312, 4.87, 52.312)
+in_28992    <- convert_points(in_wgs84,"EPSG:4326","EPSG:28992")
+
+pol1 <- list(out_28992,in_28992)
+
+out_wgs84    <-  c( 4.86, 52.30, 4.86, 52.306, 4.88, 52.306, 4.88, 52.30, 4.86, 52.30)
+out_28992    <- convert_points(out_wgs84,"EPSG:4326","EPSG:28992")
+
+pol2 <- list(out_28992)
+
+mpol1        <- list(pol1,pol2)
+my_mpol      <- sf::st_sfc(sf::st_multipolygon(mpol1),crs='EPSG:28992')
+
+ # sf::st_write(my_mpol,'mpol110.gml')
+ # sf::st_write(my_mpol,'mpol200.gml',dataset_options = 'FORMAT=GML3.2')
+
+
+
+xml_query    <- build_filter(version=version,
+     spat_xml('geometrie',
+              spat_feature('MultiPolygon','EPSG:28992',mpol1),
+              spat_fun='Intersects')
+  )
+
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
+f11        <-  WFS_getfeature(typename
+             ,version=version
+             ,filter=xml_query
+             ,propertyname=fields)
+
+expect_gte(dim(f11)[1],1)
+expect_equal(dim(f11)[2],4)
+
+expect_true(all(
+    sf::st_distance(f11,my_mpol,by_element=T)==units::set_units(0,'m')
+    ))
+  }
+
+  mpoly_test1('1.1.0')
+  mpoly_test1('2.0.0')
 
 
 })
