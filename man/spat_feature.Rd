@@ -2,7 +2,7 @@
 % Please edit documentation in R/WFS_filter_aux.R
 \name{spat_feature}
 \alias{spat_feature}
-\title{Creates the description in XML format of a point, linestring, polygon or envelope,}
+\title{Creates the description in XML format of a spatial feature}
 \usage{
 spat_feature(
   sptype,
@@ -13,12 +13,13 @@ spat_feature(
 )
 }
 \arguments{
-\item{sptype}{Character string with the type of spatial feature. One of \code{envelope}, \code{point}, \code{linestring} or \code{polygon} (case insensitive)}
+\item{sptype}{Character string with the type of spatial feature.
+One of \code{envelope}, \code{point}, \code{linestring}, \code{polygon} or
+the multi version of the last three options. The argument is case insensitive}
 
 \item{crs_in}{Character string with the Coordinate Reference System}
 
-\item{coords}{A numeric vector of even length with the coordinates of the feature or in case of a polygon a list of
-such vectors containing the outer coordinates and optionally the coordinates of holes.
+\item{coords}{A numeric vector of even length with the coordinates of the feature or a list (of lists) of those vectors.
 Instead of a vector also a two-column matrix can be specified.}
 
 \item{version}{Character string with the WFS request version}
@@ -30,12 +31,34 @@ Character vector with the created xml fragment
 }
 \description{
 The coordinates have to be specified in the way done in the corresponding \code{sf} function:
-\code{\link[sf:st]{sf::st_point()}}, \code{\link[sf:st]{sf::st_linestring()}}, \code{\link[sf:st]{sf::st_polygon()}} or \code{\link[sf:st_bbox]{sf::st_bbox()}} (the latter for \code{envelope}). \cr
+\code{\link[sf:st]{sf::st_point()}}, \code{\link[sf:st]{sf::st_linestring()}}, \code{\link[sf:st]{sf::st_polygon()}},
+\code{\link[sf:st]{sf::st_multipoint()}}, \code{\link[sf:st]{sf::st_multilinestring()}}, \code{\link[sf:st]{sf::st_multipolygon()}},
+or \code{\link[sf:st_bbox]{sf::st_bbox()}} (the latter for \code{envelope}).
+In places where the corresponding \code{sf} function requires a two-column matrix, this function also
+accepts even-length vectors. See Details.
+}
+\details{
+Assuming that we always use a two_colum matrix (apart from the 'envelope' that needs a length four vector) we need the following coordinates structure:
+\itemize{
+\item point : a one-row  matrix
+\item linestring : a n-row matrix with n > 1
+\item polygon : a list of matrices where each matrix has more than three rows with the first row equal to the last.
+The first matrix specifies the outer boundary and the optional other matrices specify holes.
+\item multipoint: a n-row matrix with n > 1
+\item multilinestring : a list of linestring specifications
+\item multipolygon : a list of polygon specifications (therefore a list of a list)
+}
+
 The resulting XML fragment can be used in \code{\link[=build_filter]{build_filter()}} or \code{\link[=spat_xml]{spat_xml()}}
 }
 \examples{
 \dontrun{
- spat_feature('point','EPSG:28992', point_coords)
- spat_feature('Polygon','EPSG:28992',list(outer_coords,hole_coords))
+crs <- 'EPSG:28992'
+spat_feature('envelope',crs, c(x1,y1,x2,y2) )
+spat_feature('point',crs, c(x1,y1) )
+spat_feature('linestring',crs, matrix(c(x1,y1,x2,y2,x3,y3),ncol=2,byrow=T) ) # or
+spat_feature('linestring',crs, c(x1,y1,x2,y2,x3,y3) )
+spat_feature('polygon',crs,list(outer_coords,hole1_coords,hole2_coords) )
+spat_feature('multipolygon',crs,list(polygon1,polygon2))
 }
 }

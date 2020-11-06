@@ -167,16 +167,33 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
    coords
  }
 
-#' Creates the description in XML format of a point, linestring, polygon, multipoint or envelope,
+#' Creates the description in XML format of a spatial feature
+#'
 #'
 #' The coordinates have to be specified in the way done in the corresponding `sf` function:
-#' [sf::st_point()], [sf::st_linestring()], [sf::st_polygon()], [sf::st_multipoint()] or [sf::st_bbox()] (the latter for `envelope`). \cr
+#' [sf::st_point()], [sf::st_linestring()], [sf::st_polygon()],
+#' [sf::st_multipoint()], [sf::st_multilinestring()], [sf::st_multipolygon()],
+#' or [sf::st_bbox()] (the latter for `envelope`).
+#' In places where the corresponding `sf` function requires a two-column matrix, this function also
+#' accepts even-length vectors. See Details.
+#'
+#' Assuming that we always use a two_colum matrix (apart from the 'envelope' that needs a length four vector) we need the following coordinates structure:
+#'
+#' - point : a one-row  matrix
+#' - linestring : a n-row matrix with n > 1
+#' - polygon : a list of matrices where each matrix has more than three rows with the first row equal to the last.
+#' The first matrix specifies the outer boundary and the optional other matrices specify holes.
+#' - multipoint: a n-row matrix with n > 1
+#' - multilinestring : a list of linestring specifications
+#' - multipolygon : a list of polygon specifications (therefore a list of a list)
+#'
 #' The resulting XML fragment can be used in [build_filter()] or [spat_xml()]
 #'
-#' @param sptype Character string with the type of spatial feature. One of `envelope`, `point`, `linestring` or `polygon` (case insensitive)
+#' @param sptype Character string with the type of spatial feature.
+#' One of `envelope`, `point`, `linestring`, `polygon` or
+#' the multi version of the last three options. The argument is case insensitive
 #' @param crs_in Character string with the Coordinate Reference System
-#' @param coords A numeric vector of even length with the coordinates of the feature or in case of a polygon a list of
-#'  such vectors containing the outer coordinates and optionally the coordinates of holes.
+#' @param coords A numeric vector of even length with the coordinates of the feature or a list (of lists) of those vectors.
 #'  Instead of a vector also a two-column matrix can be specified.
 #' @param version Character string with the WFS request version
 #' @param sep Character string with separator (to be used to split outer from inner polygons). Useful for printouts of query strings.
@@ -184,62 +201,73 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
 #' @export
 #' @examples
 #' \dontrun{
-#'  spat_feature('point','EPSG:28992', point_coords)
-#'  spat_feature('Polygon','EPSG:28992',list(outer_coords,hole_coords))
+#' crs <- 'EPSG:28992'
+#' spat_feature('envelope',crs, c(x1,y1,x2,y2) )
+#' spat_feature('point',crs, c(x1,y1) )
+#' spat_feature('linestring',crs, matrix(c(x1,y1,x2,y2,x3,y3),ncol=2,byrow=T) ) # or
+#' spat_feature('linestring',crs, c(x1,y1,x2,y2,x3,y3) )
+#' spat_feature('polygon',crs,list(outer_coords,hole1_coords,hole2_coords) )
+#' spat_feature('multipolygon',crs,list(polygon1,polygon2))
 #' }
- spat_feature <- function (sptype, crs_in, coords,
-                           version = WFS_get_version(),
+ spat_feature <- function (sptype,crs_in,
+                           coords, version = WFS_get_version(),
                            sep = WFS_get_sep()) {
-  if (!(version %in% c('1.1.0', '2.0.0')))
-    return("only version '1.1.0' and '2.0.0' are allowed")
+   if (!(version %in% c('1.1.0', '2.0.0')))
+     return("only version '1.1.0' and '2.0.0' are allowed")
 
-  sptype1 <- tolower(sptype)
-  if (sptype1 == 'envelope') {
-      fg1 = fg("gml:Envelope"
-        , create_envelope(coords,version)
+   sptype1 <- tolower(sptype)
+   if (sptype1 == 'envelope') {
+     fg2 = create_envelope(coords, version)
+     fg1 = fg("gml:Envelope"
+       , fg2
+       , ta = glue::glue('srsName = "{crs_in}"')
+     )
+   } else if (sptype1 == 'point') {
+     fg2 = create_coord(coords, 'pos', version)
+     fg1 = fg("gml:Point"
+       , fg2
+       , ta = glue::glue('srsName = "{crs_in}"')
+     )
+   } else if (sptype1 == 'linestring') {
+     fg2 = create_coord(coords, 'poslist', version)
+     fg1 = fg("gml:LineString"
+       , fg2
+       , ta = glue::glue('srsName = "{crs_in}"')
+     )
+   } else if (sptype1 == 'polygon') {
+     fg2 = create_pol(coords, 'poslist', version, sep = sep)
+     fg1 = fg("gml:Polygon"
+        , fg2
         , ta = glue::glue('srsName = "{crs_in}"')
-      )
-  } else if (sptype1 == 'point') {
-      fg1 = fg("gml:Point"
-        , create_coord(coords,'pos',version)
+     )
+   } else if (sptype1 == 'multipoint') {
+     fg2 = create_mp(coords, 'pos', version, sep = sep)
+     fg1 = fg("gml:MultiPoint"
+        , fg2
         , ta = glue::glue('srsName = "{crs_in}"')
-      )
-  } else if (sptype1 == 'linestring') {
-      fg1 = fg("gml:LineString"
-        , create_coord(coords,'posList',version)
+     )
+   } else if (sptype1 == 'multilinestring') {
+     if (version == '1.1.0')
+       gmltype = 'gml:MultiLineString'
+     else
+       gmltype = 'gml:MultiCurve'
+     fg2 = create_mls(coords, 'poslist', version, sep = sep)
+     fg1 = fg(gmltype
+        , fg2
         , ta = glue::glue('srsName = "{crs_in}"')
-      )
-  } else if (sptype1 == 'polygon') {
-    fg2 = create_pol(coords, 'poslist', version, sep=sep)
-    fg1 = fg("gml:Polygon"
-            , fg2
-            , ta = glue::glue('srsName = "{crs_in}"')
-      )
-  } else if (sptype1 == 'multipoint') {
-    fg2 = create_mp(coords, 'pos', version, sep=sep)
-    fg1 = fg("gml:MultiPoint"
-            , fg2
-            , ta = glue::glue('srsName = "{crs_in}"')
-      )
-  } else if (sptype1 == 'multilinestring') {
-    if (version == '1.1.0') gmltype = 'gml:MultiLineString'
-    else gmltype = 'gml:MultiCurve'
-    fg2 = create_mls(coords, 'poslist', version, sep=sep)
-    fg1 = fg( gmltype
-            , fg2
-            , ta = glue::glue('srsName = "{crs_in}"')
-      )
-  } else if (sptype1 == 'multipolygon') {
-    if (version == '1.1.0') gmltype = 'gml:MultiPolygon'
-    else gmltype = 'gml:MultiSurface'
-    fg2 = create_mpol(coords, 'poslist', version, sep=sep)
-    fg1 = fg( gmltype
-            , fg2
-            , ta = glue::glue('srsName = "{crs_in}"')
-      )
-    }
-
-  fg1
+     )
+   } else if (sptype1 == 'multipolygon') {
+     if (version == '1.1.0')
+       gmltype = 'gml:MultiPolygon'
+     else
+       gmltype = 'gml:MultiSurface'
+     fg2 = create_mpol(coords, 'poslist', version, sep = sep)
+     fg1 = fg(gmltype
+        , fg2
+        , ta = glue::glue('srsName = "{crs_in}"')
+     )
+   }
+   fg1
  }
 
  create_envelope <- function (coords, version) {
@@ -316,6 +344,42 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
    paste(x, collapse = sep)
  }
 
+ mat2char <- function(coords, sep = ',') {
+     if (!is.matrix(coords)) {
+       coords1 <- matrix(coords, ncol = 2, byrow = T)
+     } else {
+       coords1 <- coords
+     }
+     a <- purrr::array_branch(coords1, 1)
+     b <- purrr::map(a,  ~ paste(., collapse = sep))
+     paste(b, collapse = ' ')
+   }
+
+ create_coord <-
+   function (coords, coord_type, version = WFS_get_version()) {
+     if (!(version %in% c('1.1.0', '2.0.0')))
+       return("only version '1.1.0' and '2.0.0' are allowed")
+     if (is.list(coords))
+       purrr::map(coords,  ~ create_coord(., coord_type, version))
+     else {
+       if (!is.matrix(coords))
+         coords <- matrix(coords, ncol = 2, byrow = T)
+       if (version == '1.1.0')
+         fg1 <- fg('gml:coordinates'
+                   , mat2char(coords, sep = ',')
+                   , ta = 'decimal="." cs="," ts=" "')
+       else {
+         if (tolower(coord_type) == 'pos')
+           coord_type <- 'gml:pos'
+         else
+           coord_type <- 'gml:posList'
+         fg1 = fg(coord_type
+                  , mat2char(coords, sep = ' ')
+                  , ta = 'decimal="." cs="," ts=" "')
+       }
+       fg1
+     }
+   }
 
 #' Creates the spatial part of a filter in XML format
 #'
@@ -374,39 +438,4 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
   return(fg1)
 }
 
- mat2char <- function(coords, sep = ',') {
-     if (!is.matrix(coords)) {
-       coords1 <- matrix(coords, ncol = 2, byrow = T)
-     } else {
-       coords1 <- coords
-     }
-     a <- purrr::array_branch(coords1, 1)
-     b <- purrr::map(a,  ~ paste(., collapse = sep))
-     paste(b, collapse = ' ')
-   }
 
- create_coord <-
-   function (coords, coord_type, version = WFS_get_version()) {
-     if (!(version %in% c('1.1.0', '2.0.0')))
-       return("only version '1.1.0' and '2.0.0' are allowed")
-     if (is.list(coords))
-       purrr::map(coords,  ~ create_coord(., coord_type, version))
-     else {
-       if (!is.matrix(coords))
-         coords <- matrix(coords, ncol = 2, byrow = T)
-       if (version == '1.1.0')
-         fg1 <- fg('gml:coordinates'
-                   , mat2char(coords, sep = ',')
-                   , ta = 'decimal="." cs="," ts=" "')
-       else {
-         if (tolower(coord_type) == 'pos')
-           coord_type <- 'gml:pos'
-         else
-           coord_type <- 'gml:posList'
-         fg1 = fg(coord_type
-                  , mat2char(coords, sep = ' ')
-                  , ta = 'decimal="." cs="," ts=" "')
-       }
-       fg1
-     }
-   }
