@@ -82,17 +82,17 @@ WFS_set_sep(orgsep)
  expect_equal( f2a,f2b)
 
  # save version and sep over function
- oversion <- WFS_set_version('2.0.0')
- osep     <- WFS_set_sep('xyz')
+ WFS_set_version('2.0.0')
+ WFS_set_sep('xyz')
  f3a <- build_filter(version='1.1.0','x',sep='abc')
- expect_equal( WFS_get_version(), oversion)
- expect_equal( WFS_get_sep(), osep)
+ expect_equal( WFS_get_version(), '2.0.0')
+ expect_equal( WFS_get_sep(), 'xyz')
 
- oversion <- WFS_set_version('1.1.0')
- osep     <- WFS_set_sep('xyz')
+ WFS_set_version('1.1.0')
+ osep     <- WFS_set_sep('abc')
  f3b <- build_filter(version='2.0.0','x',sep='def')
- expect_equal( WFS_get_version(), oversion)
- expect_equal( WFS_get_sep(), osep)
+ expect_equal( WFS_get_version(), '1.1.0')
+ expect_equal( WFS_get_sep(), 'abc')
  WFS_set_sep('\n')
 
  # generate xml for correct version
