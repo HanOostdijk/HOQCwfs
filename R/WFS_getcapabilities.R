@@ -87,7 +87,7 @@ WFS_getcapabilities_POST <- function(
           , ta=glue::glue('service="WFS" version="{version}" {xmlns}' )
         )
   fg0  <- glue::glue_collapse(c(fgh,fg1),sep='\n')
-  xmldoc  <- HOQCwfs:::WFS_POST_request(fg0,url,debug = debug,
+  xml_doc  <- HOQCwfs:::WFS_POST_request(fg0,url,debug = debug,
                                         to_sf = F, verbose = verbose)
   handle_cap_output(xml_doc,debug,out_path)
 }
