@@ -4,9 +4,10 @@
   invisible()
 }
 
-WFS_default_url     <- "https://geoweb.amstelveen.nl/geoserver/topp/wfs"
-WFS_default_version <- "1.1.0"
-WFS_default_sep     <- "\n"
+WFS_default_url        <- "https://geoweb.amstelveen.nl/geoserver/topp/wfs"
+WFS_default_version    <- "1.1.0"
+WFS_default_versionall <- F
+WFS_default_sep        <- "\n"
 
 #' Get/Set default parameters url, request version and separator
 #'
@@ -60,17 +61,23 @@ WFS_get_url <- function () {
 #' WFS_set_version('2.0.0')
 
 
-WFS_set_version <- function (version=NULL) {
-	if ( (!is.null(version)) && (! (version %in% c('1.1.0','2.0.0') ) ) ) {
-	  warning("version ",version," is not supported: ",WFS_default_version," will be used")
-		version <- WFS_default_version
-	}
+WFS_set_version <- function (version = NULL) {
+  if (is.null(version))
+    version <- WFS_default_version
+  else {
+    cv <- check_version(version)
+    if (!is.null(cv)) {
+      warning("version ",version," is not supported: ",
+              WFS_default_version," will be used")
+      version <- WFS_default_version
+    }
+  }
   org <- .WFS_options$version
-	if (is.null(version)  ) {
-		version <- WFS_default_version
-	}
-	.WFS_options$version <- version
-	invisible(org)
+  if (is.null(version)) {
+    version <- WFS_default_version
+  }
+  .WFS_options$version <- version
+  invisible(org)
 }
 
 #' @export
@@ -85,6 +92,30 @@ WFS_get_version <- function () {
 		version <- .WFS_options$version
 	}
 	version
+}
+
+check_version <- function (version ) {
+  if (WFS_get_versionall() == T) return(NULL)
+  if (! (version %in% c('1.1.0','2.0.0') ) )
+    return("only version '1.1.0' and '2.0.0' are allowed")
+}
+
+WFS_set_versionall <- function (versionall=F) {
+  org <- .WFS_options$versionall
+	if (is.null(versionall)  ) {
+		versionall <- WFS_default_versionall
+	}
+	.WFS_options$versionall <- versionall
+	invisible(org)
+}
+
+WFS_get_versionall <- function () {
+	versionall <- .WFS_options$versionall
+	if (is.null(versionall)) {
+		.WFS_options$versionall <- WFS_default_versionall
+		versionall <- .WFS_options$versionall
+	}
+	versionall
 }
 
 #' @param sep NULL for the default ( **`\n`** ) separator or an alternative sep (e.g. `''`  ) otherwise

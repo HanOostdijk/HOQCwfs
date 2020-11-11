@@ -79,6 +79,17 @@ WFS_describefeaturetype <-
       debug = F
       out_path = NULL
     }
+    if (debug ==T )
+      return(
+        WFS_describefeaturetype1(
+        typename = typenames,
+        url = url,
+        version = version,
+        debug = debug,
+        verbose = verbose,
+        out_path = out_path)
+      )
+    else
     purrr::map_dfr(
       typenames,
       ~ WFS_describefeaturetype1(

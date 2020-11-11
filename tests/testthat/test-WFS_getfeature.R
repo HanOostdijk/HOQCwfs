@@ -1,3 +1,17 @@
+# test_that("WFS_getfeature aux functions", {
+#
+# # mylist = list (A ='Aa',b='Bb',c='D')
+# # check_in_list(mylist, 'a','aa')
+# # check_in_list(mylist, 'b','aa')
+# # check_in_list(mylist, 'b','ba')
+# # check_in_list(mylist, 'b','bB')
+#
+# })
+
+
+
+
+
 test_that("WFS_getfeature checks", {
   # library(HOQCwfs)
   # library(testthat)
@@ -5,8 +19,8 @@ test_that("WFS_getfeature checks", {
   L1a <- list(a=1,a=2,b=3,a=4,c=5,b=6)
   L1b <- list(a=1,b=3,c=5)
   L1c <- list(a=4,b=6,c=5)
-  expect_identical( HOQCwfs:::keep_unique(L1a,keep_first = T),L1b)
-  expect_identical( HOQCwfs:::keep_unique(L1a,keep_first = F),L1c)
+  expect_identical( WFS_util_keep_unique(L1a,keep_first = T),L1b)
+  expect_identical( WFS_util_keep_unique(L1a,keep_first = F),L1c)
 
   typename <- 'topp:gidw_groenbomen'
   version1 <- '1.1.0'

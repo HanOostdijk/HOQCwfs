@@ -413,24 +413,28 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
                        units='meters') {
   if (!(version %in% c('1.1.0', '2.0.0')))
     return("only version '1.1.0' and '2.0.0' are allowed")
+  if (version == '1.1.0')
+    v <- function(s) paste0('ogc:',s)
+  else
+    v <- function(s) paste0('fes:',s)
   if (!is.null(distance))
-    fg2 = fg('Distance'
+    fg2 = fg(v('Distance')
         , glue::glue('{distance}')
-        , ta = glue::glue('units="{units}"'))
+        , ta = glue::glue('{u}="{units}"',u=v('units')))
   else
     fg2 = ''
   if (version == '1.1.0') {
     fg1 = fg(
-      spat_fun
-      , bg("PropertyName", gemprop)
+      v(spat_fun)
+      , bg(v("PropertyName"), gemprop)
       , feature
       , fg2
     )
   }
   else if (version == '2.0.0') {
     fg1 = fg(
-      spat_fun
-      , bg("ValueReference", gemprop)
+      v(spat_fun)
+      , bg(v("ValueReference"), gemprop)
       , feature
       , fg2
     )

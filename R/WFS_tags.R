@@ -29,7 +29,10 @@
 
 fg <- function(tag, ..., ta=NULL, sep=WFS_get_sep()) {
   ta   <- ifelse(is.null(ta),"",glue::glue(" {ta}"))
-  dots <- do.call(paste,c(list(...),sep=sep))
+  if (length(list(...))>0)
+    dots <- do.call(paste,c(list(...),sep=sep))
+  else
+    dots =''
   x    <- as.character(glue::glue("<{tag}{ta}>{sep}{dots}{sep}</{tag}>"))
   if (stringr::str_length(sep) >0 )
     x <- stringr::str_replace_all(x,glue::glue("{sep}+"),sep)
