@@ -2,7 +2,7 @@
 % Please edit documentation in R/WFS_getfeature2.R
 \name{WFS_getfeature2}
 \alias{WFS_getfeature2}
-\title{Retrieve WFS information with the GetFeature request}
+\title{Retrieve WFS information with the GetFeature_POST request}
 \usage{
 WFS_getfeature2(
   typename,
@@ -10,7 +10,8 @@ WFS_getfeature2(
   url = WFS_get_url(),
   version = WFS_get_version(),
   debug = F,
-  verbose = F
+  sfverbose = F,
+  WFSverbose = rep(F, 4)
 )
 }
 \arguments{
@@ -31,7 +32,8 @@ a \code{sf} object with the requested information (the 'id' variable and the geo
 or a character string with an error message
 }
 \description{
-Retrieve the requested information
+TODO will be integrated with WFS_getfeature.
+Retrieve the requested information.
 }
 \details{
 Arguments that are recognized by the GetFeature request are:

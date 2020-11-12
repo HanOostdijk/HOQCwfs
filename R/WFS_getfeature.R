@@ -62,10 +62,9 @@ WFS_getfeature <- function(typename, ..., url=WFS_get_url(),version=WFS_get_vers
         ,outputFormat = "application/json"
         )
   url$query = append(url$query,list(...))
-
   url$query <- build_request_GET(url$query)
-
   request <- httr::build_url(url)
+
   res <- WFS_GET_request (request,debug=debug,to_sf=T,verbose=verbose)
   if (inherits(res, 'data.frame'))
     row.names(res) <- NULL
@@ -129,10 +128,6 @@ build_request_GET <- function(reqlist) {
   reqlist <- WFS_util_keep_unique(reqlist, keep_first = F)
   version <- reqlist[["version"]] # (latest) version
   vnames  <- WFS_util_v12_names()
-  # if (version == '1.1.0') replarg <- vnames[[2]]
-  # else  replarg <- vnames[[3]]
-  # replarg <- if (version == '1.1.0') vnames[[2]]
-  #      else  names[[3]]
   replarg <- (ifelse (version == '1.1.0',
                      vnames[2],vnames[3]))[[1]]
   reqlist <- WFS_util_unify_names(reqlist,vnames)

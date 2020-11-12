@@ -1,7 +1,8 @@
 
-#' Retrieve WFS information with the GetFeature request
+#' Retrieve WFS information with the GetFeature_POST request
 #'
-#' Retrieve the requested information
+#' TODO will be integrated with WFS_getfeature.
+#' Retrieve the requested information.
 #' @param typename Character with the name of a feature (such as e.g. found by using [WFS_featuretypes()] )
 #' @param ... optional arguments for the `GetFeature` request. See **Details**
 #' @param url URL of the WFS service. See [WFS_get_url()] for the default
@@ -50,7 +51,12 @@
 #'    filter  = f5)
 #' }
 
-WFS_getfeature2 <- function(typename, ..., url=WFS_get_url(),version=WFS_get_version(),debug=F,verbose=F){
+WFS_getfeature2 <- function(typename, ...,
+                            url=WFS_get_url(),
+                            version=WFS_get_version(),
+                            debug=F,
+                            sfverbose=F,
+                            WFSverbose=rep(F,4)){
   if (! (version %in% c('1.1.0','2.0.0') ) )
     return("only version '1.1.0' and '2.0.0' are allowed")
   base_url <- url
@@ -62,9 +68,10 @@ WFS_getfeature2 <- function(typename, ..., url=WFS_get_url(),version=WFS_get_ver
         ,outputFormat = "application/json"
         )
   url$query = append(url$query,list(...))
-  url$query <- keep_unique(url$query, keep_first = F)
+  url$query <- WFS_util_keep_unique(url$query, keep_first = F)
   request <- build_request_POST(url$query)
-  res <- WFS_POST_request (request,base_url,debug=debug,to_sf=T,verbose=verbose)
+  res <- WFS_POST_request (request,base_url,debug=debug,
+                to_sf=T,sfverbose=sfverbose,WFSverbose=WFSverbose)
   if (inherits(res, 'data.frame'))
     row.names(res) <- NULL
   if (inherits(res, 'xml_document')) {
@@ -87,8 +94,7 @@ WFS_getfeature2 <- function(typename, ..., url=WFS_get_url(),version=WFS_get_ver
   res
 }
 
-
-#' Retrieve information with the GET request
+#' Retrieve information with the POST request
 #'
 #' Retrieve the requested information
 #' @param request Character string with expanded url
@@ -101,18 +107,22 @@ WFS_getfeature2 <- function(typename, ..., url=WFS_get_url(),version=WFS_get_ver
 #' \dontrun{
 #' }
 
-WFS_POST_request <-
-  function (request, url = WFS_get_url(), debug = F, to_sf = T, verbose = F) {
+WFS_POST_request <-   function (request,
+            url = WFS_get_url(),
+            debug = F,
+            to_sf = T,
+            sfverbose = F,
+            WFSverbose = rep(F,4)) {
     suppressWarnings(res <- try({
-      if (verbose == T)
-        res <- httr::POST(url, body = request,
-                          httr::content_type("text/xml"), httr::verbose())
-      else
-        res <- httr::POST(url, body = request,
-                          httr::content_type("text/xml"))
-    }
-    , silent = TRUE)
-    )
+        if (any(WFSverbose==T) ) {
+          res <- httr::POST(url, body = request,
+                          httr::content_type("text/xml"),
+                          do.call(httr::verbose,as.list(WFSverbose)) )
+        } else {
+          res <- httr::POST(url, body = request,
+                          httr::content_type("text/xml") )
+        }
+    }, silent = TRUE))
     if (debug || ('try-error' %in% class(res)))
       return(res)
     if (httr::http_error(res))
@@ -123,7 +133,7 @@ WFS_POST_request <-
     {
       if (to_sf)
       {
-        r <- sf::read_sf(res_data, quiet  = (verbose==F), as_tibble = F)
+        r <- sf::read_sf(res_data, quiet  = sfverbose==F, as_tibble = F)
       } else {
         r <- jsonlite::fromJSON(res_data)
       }
@@ -140,30 +150,32 @@ build_request_POST <- function(reqlist) {
   g  <- glue::glue
   gc <- glue::glue_collapse
 
+  version <- reqlist[["version"]] # (latest) version
+  vnames  <- WFS_util_v12_names()
+  replarg <- (ifelse (version == '1.1.0',
+                     vnames[2],vnames[3]))[[1]]
+  reqlist <- WFS_util_unify_names(reqlist,vnames)
+  reqlist <- WFS_util_keep_unique(reqlist, keep_first = F)
+
   v0names <- c('maxF',        'typeN')
   v1names <- c('maxFeatures', 'typeName')
   v2names <- c('count',       'typeNames')
 
-  version <- reqlist[["version"]]
-  if (version == '1.1.0')
-    v9names <- v1names
-  else
-    v9names <- v2names
-  reqlist <- WFS_util_replace_names(reqlist, c(v1names,v2names), c(v0names,v0names))
   names(reqlist) <- tolower(names(reqlist))
+  names(replarg) <- tolower(vnames[[1]])
 
-  attribs <- HOQCwfs:::xmlns_defs(version, as.txt = T)
+  attribs <- WFS_util_xmlns_defs(version, as.txt = T)
   filter  <- reqlist[["filter"]]
   typen   <- reqlist[["typen"]]
   fg2     <- fg('wfs:Query'
                 , ifelse (is.null(filter), '', filter)
-                , ta =g('{v9}="{typen}" srsName="EPSG:28992"',v9=v9names[2])
+                , ta =g('{v9}="{typen}" srsName="EPSG:28992"',v9=replarg['typen'])
              )
   outputFormat <- reqlist[["outputformat"]]
-  count   <- reqlist[["maxf"]]
-  countc  <- ifelse (is.null(count), '', g(' {v9}="{count}"',v9=v9names[1]))
+  maxf   <- reqlist[["maxf"]]
+  maxfc  <- ifelse (is.null(maxf), '', g(' {v9}="{maxf}"',v9=replarg['maxf']))
   startindex <- reqlist[["startindex"]]
-  startindex  <- ifelse (is.null(startindex), '', g(' startIndex="{startindex}"'))
+  startindex <- ifelse (is.null(startindex), '', g(' startIndex="{startindex}"'))
   resultType <- reqlist[["resulttype"]]
   resultType  <- if (is.null(resultType))
                    ''
@@ -174,7 +186,7 @@ build_request_POST <- function(reqlist) {
   fg1 <- fg('wfs:GetFeature'
     , fg2
     , ta = g('service="WFS" version="{version}" {attribs} outputFormat="{outputFormat}"',
-              '{countc}{startindex}{resultType}')
+              '{maxfc}{startindex}{resultType}')
   )
   fgh <- '<?xml version="1.0" encoding="ISO-8859-1"?>'
   gc(c(fgh, fg1), sep = '\n')

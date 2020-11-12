@@ -2,14 +2,15 @@
 % Please edit documentation in R/WFS_getfeature2.R
 \name{WFS_POST_request}
 \alias{WFS_POST_request}
-\title{Retrieve information with the GET request}
+\title{Retrieve information with the POST request}
 \usage{
 WFS_POST_request(
   request,
   url = WFS_get_url(),
   debug = F,
   to_sf = T,
-  verbose = F
+  sfverbose = F,
+  WFSverbose = rep(F, 4)
 )
 }
 \arguments{
