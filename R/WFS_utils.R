@@ -111,9 +111,9 @@ WFS_util_attrs <- function(cap, skip=c('none','known','version'), as.text=T) {
   else if (skip == 'known')
     attribs[names(attribs) %in% known] <-NULL
   if (as.text)
-     glue::glue_collapse(
+     as.character(glue::glue_collapse(
                 purrr::imap_chr(attribs,  ~ glue::glue('{.y}="{.x}"'))
-                , sep = ' ')
+                , sep = ' '))
   else attribs
 }
 
@@ -208,9 +208,14 @@ WFS_util_unify_names <- function (mylist,vnames) {
          c(vnames[[1]],vnames[[1]]))
 }
 
+#' keep first or last entry of list entries with duplicated names
+#'
+#' @param mylist A named list
+#' @param keep.first Logical scalar indicating if the first (when `TRUE`) or last entry (when `FALSE`) with duplicate names will kept
+#' @param ignore.case Logical scalar indicating if case is ignored when comparing for duplicate names
+#' @return A copy of `mylist` with duplicate names removed (apart from the first when `keep_first=TRUE` or last otherwise )
 
 WFS_util_keep_unique <- function(mylist, keep_first = T, ignore.case=T) {
-  # keep first or last entry of entries with duplicated names
   n  <- names(mylist)
   if (ignore.case)
     n<-tolower(n)
@@ -223,14 +228,51 @@ WFS_util_keep_unique <- function(mylist, keep_first = T, ignore.case=T) {
   }
 }
 
-WFS_util_check_in_list <- function(mylist, name, value) {
-  # check if 'name' occurs in character list 'mylist' with value value
-  # assuming names in list are unique (considered case insensitive)
-  name <- tolower(name)
-  ix <- match(name, tolower(names(mylist)),nomatch = 0)
-  if (ix == 0) return(F)
-  if (tolower(mylist[[ix]])== tolower(value)) return(T)
-  else return(F)
+#' Check a character value in a named list with character contents
+#'
+#' With the default parameters the function is checking without caring for lower and upper caps
+#' if a certain entry contains a certain value and when a name occurs more than once
+#' the first occurrence will be used. By specifying the 'ignore_case' arguments to `FALSE` the user
+#' can indicate that the difference in lower and upper caps is important when comparing 'names'
+#' (in case of `name_ignore_case` ) and/or  'values' (in case of `value_ignore_case` ).
+#' By specifying `keep.first=FALSE` the last entry will be used when more than one is selected.
+#'
+#' @param mylist A named list with character contents
+#' @param name Character string with the name of the entry that is searched
+#' @param value A character scalar to check for in the `name` entry
+#' @param keep.first Logical scalar indicating if the first (when `TRUE`) or last entry (when `FALSE`) with duplicate names will be used
+#' @param name_ignore_case Logical scalar indicating if case is ignored when searching for the name
+#' @param value_ignore_case Logical scalar indicating if case is ignored when checking the value
+#' @return Logical value indicating if the `name` entry contains the value `value`
+
+WFS_util_check_in_list <- function(mylist,  name, value, keep_first = T,
+                      name_ignore_case = T, value_ignore_case = T)   {
+  n  <- names(mylist)
+  if (name_ignore_case) {
+    n <- tolower(n)
+    name <- tolower(name)
+  }
+  if (keep_first) {
+    ix <- match(name, n, nomatch = 0)
+    if (ix == 0)
+      return(F)
+  } else {
+    ix <- match(name, rev(n), nomatch = 0)
+    if (ix == 0)
+      return(F)
+    ix <- 1 + length(n) - ix
+  }
+  if (value_ignore_case) {
+    c1 <- tolower(mylist[[ix]])
+    c2 <- tolower(value)
+  } else {
+    c1 <- mylist[[ix]]
+    c2 <- value
+  }
+  if (c1 == c2)
+    return(T)
+  else
+    return(F)
 }
 
 

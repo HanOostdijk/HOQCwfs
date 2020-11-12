@@ -1,16 +1,3 @@
-# test_that("WFS_getfeature aux functions", {
-#
-# # mylist = list (A ='Aa',b='Bb',c='D')
-# # check_in_list(mylist, 'a','aa')
-# # check_in_list(mylist, 'b','aa')
-# # check_in_list(mylist, 'b','ba')
-# # check_in_list(mylist, 'b','bB')
-#
-# })
-
-
-
-
 
 test_that("WFS_getfeature checks", {
   # library(HOQCwfs)
