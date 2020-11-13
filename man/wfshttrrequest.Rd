@@ -24,7 +24,7 @@ httr_POST_request(
 }
 \arguments{
 \item{request}{Character string with url as needed for \code{\link[httr:GET]{httr::GET()}} in case of the \code{httr_GET_request} and a character string with
-a \code{\link[httr:POST]{httr::POST()}} request otherwise}
+a \code{\link[httr:POST]{httr::POST()}} body otherwise}
 
 \item{debug}{Logical indicating if the httr response object is to be returned}
 
@@ -71,7 +71,7 @@ reqP <- paste0(
  'xmlns="http://www.opengis.net/wfs" xmlns:wfs="http://www.opengis.net/wfs" ',
  'xmlns:ows="http://www.opengis.net/ows" xmlns:gml="http://www.opengis.net/gml" ',
  'xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" ',
- 'xsi:schemaLocation="http://www.opengis.net/wfs">'
+ 'xsi:schemaLocation="http://www.opengis.net/wfs"/>'
 )
 cap1 <- httr_POST_request(WFS_get_url(),reqP,httrverbose=c(T,F))
 }

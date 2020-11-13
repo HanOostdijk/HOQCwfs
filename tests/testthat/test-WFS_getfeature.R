@@ -11,6 +11,16 @@ test_that("WFS_getfeature checks", {
 
   typename <- 'topp:gidw_groenbomen'
   version1 <- '1.1.0'
+
+  wfs0      <- WFS_getfeature(typename, httrType="GET",version=version1,
+              startindex=3,maxfeatures=5)
+  wfs1      <- WFS_getfeature(typename, httrType="POST",version=version1,
+              startindex=3,maxfeatures=5)
+  expect_equal(dim(wfs0)[1],5)
+  expect_equal(wfs0,wfs1)
+
+  typename <- 'topp:gidw_groenbomen'
+  version1 <- '1.1.0'
   version2 <- '2.0.0'
   version3 <- 'x.3.0'
   pnames    <- c("boom_omschrijf", "jaar")
