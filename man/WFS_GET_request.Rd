@@ -4,7 +4,13 @@
 \alias{WFS_GET_request}
 \title{Retrieve information with the GET request}
 \usage{
-WFS_GET_request(request, debug = F, to_sf = T, verbose = F)
+WFS_GET_request(
+  request,
+  debug = F,
+  to_sf = T,
+  sfverbose = F,
+  httrverbose = rep(F, 4)
+)
 }
 \arguments{
 \item{request}{Character string with expanded url}

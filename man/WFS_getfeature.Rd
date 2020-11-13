@@ -10,7 +10,8 @@ WFS_getfeature(
   url = WFS_get_url(),
   version = WFS_get_version(),
   debug = F,
-  verbose = F
+  sfverbose = F,
+  httrverbose = rep(F, 4)
 )
 }
 \arguments{

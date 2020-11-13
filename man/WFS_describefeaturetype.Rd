@@ -9,7 +9,7 @@ WFS_describefeaturetype(
   url = WFS_get_url(),
   version = WFS_get_version(),
   debug = F,
-  verbose = F,
+  httrverbose = F,
   out_path = NULL
 )
 }
@@ -22,7 +22,7 @@ WFS_describefeaturetype(
 
 \item{debug}{Logical indicating the httr response is to be returned}
 
-\item{verbose}{Logical indicating full request and httr response code will be displayed}
+\item{httrverbose}{Logical indicating full request and httr response code will be displayed}
 
 \item{out_path}{(optional) path where the \code{FeatureType} info is to be saved in xml format. Only valid when \code{typenames} contains one featuretype}
 }

@@ -11,7 +11,7 @@ WFS_getfeature2(
   version = WFS_get_version(),
   debug = F,
   sfverbose = F,
-  WFSverbose = rep(F, 4)
+  httrverbose = rep(F, 4)
 )
 }
 \arguments{
@@ -25,7 +25,9 @@ WFS_getfeature2(
 
 \item{debug}{Logical indicating the httr response is to be returned}
 
-\item{verbose}{Logical indicating full request and httr response code will be displayed}
+\item{sfverbose}{Logical indicating if \code{\link[sf:st_read]{sf::read_sf()}} messages will be displayed}
+
+\item{httrverbose}{Logical vector of up to four entries to be used in \code{\link[httr:verbose]{httr::verbose()}}}
 }
 \value{
 a \code{sf} object with the requested information (the 'id' variable and the geometry will always be included)
@@ -42,11 +44,11 @@ Arguments that are recognized by the GetFeature request are:
 \item \code{cql_filter  }
 \item \code{filter      }
 \item \code{resultType} - default 'results' and alternative 'hits'. In the latter case only the number of matched features (\code{numbeOfFeatures} in 1.1.0 or \code{numberMatched} in 2.0.0) is returned
-\item \code{srsname     } indicate the crs for the coordinates e.g. \code{srsname='EPSG:4326'}
+\item \code{srsname     } indicate the crs for the coordinates of the output e.g. \code{srsname='EPSG:4326'}
 \item \code{propertyname} the name of the fields to retrieve. The \code{id} and \code{geometry} fields will always be included.
 \item \code{startIndex  } number of features to skip before retrieving features ( the output with \code{startindex=1} will start with the second feature )
 \item \code{maxfeatures } (version \verb{1.1.0}) or \code{count} (version \verb{2.0.0}) indicates the number of features to retrieve. When the wrong argument is specified it will be translated in the other.
-The \code{GetFeature} argument \code{outputFormat} has value 'application/json'but this can be overwritten
+The \code{GetFeature} argument \code{outputFormat} has value 'application/json' but this can be overwritten
 }
 }
 \examples{

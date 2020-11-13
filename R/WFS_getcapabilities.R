@@ -5,7 +5,7 @@
 #' @param url URL of the WFS service. See [WFS_get_url()] for the default
 #' @param version software version for WFS service request. See [WFS_get_version()] for the default
 #' @param debug Logical indicating the httr response is to be returned
-#' @param verbose Logical indicating full request and httr response code will be displayed
+#' @param httrverbose Logical indicating full request and httr response code will be displayed
 #' @param out_path (optional) path where the xml result is to be saved
 #' @return xml document with the `GetCapabilities` information for this WFS service
 #' or character string 'UNEXPECTED ERROR' when an error was encountered
@@ -19,7 +19,7 @@ WFS_getcapabilities <- function(
       url=WFS_get_url(),
       version=WFS_get_version(),
       debug=F,
-      verbose=F,
+      httrverbose=rep(F,4),
       out_path=NULL){
   cv <- check_version(version )
   if (! is.null(cv) )  return(cv)
@@ -30,7 +30,7 @@ WFS_getcapabilities <- function(
                     ,request = "GetCapabilities")
   request   <- httr::build_url(url)
   xml_doc <- WFS_GET_request (request, debug=debug,
-                              to_sf=F,verbose=verbose)
+                              to_sf=F,httrverbose=httrverbose)
   handle_cap_output(xml_doc,debug,out_path)
 }
 
@@ -79,7 +79,7 @@ WFS_getcapabilities_POST <- function(
       url=WFS_get_url(),
       version=WFS_get_version(),
       debug=F,
-      verbose=F,
+      httrverbose=F,
       out_path=NULL){
   xmlns <- paste(WFS_util_xmlns_defs(version),collapse = ' ')
   fgh <- '<?xml version="1.0" encoding="ISO-8859-1"?>'
@@ -88,6 +88,6 @@ WFS_getcapabilities_POST <- function(
         )
   fg0  <- glue::glue_collapse(c(fgh,fg1),sep='\n')
   xml_doc  <- HOQCwfs:::WFS_POST_request(fg0,url,debug = debug,
-                                        to_sf = F, verbose = verbose)
+                                        to_sf = F, httrverbose = httrverbose)
   handle_cap_output(xml_doc,debug,out_path)
 }

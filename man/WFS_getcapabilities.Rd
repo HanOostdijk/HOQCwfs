@@ -8,7 +8,7 @@ WFS_getcapabilities(
   url = WFS_get_url(),
   version = WFS_get_version(),
   debug = F,
-  verbose = F,
+  httrverbose = rep(F, 4),
   out_path = NULL
 )
 }
@@ -19,7 +19,7 @@ WFS_getcapabilities(
 
 \item{debug}{Logical indicating the httr response is to be returned}
 
-\item{verbose}{Logical indicating full request and httr response code will be displayed}
+\item{httrverbose}{Logical indicating full request and httr response code will be displayed}
 
 \item{out_path}{(optional) path where the xml result is to be saved}
 }

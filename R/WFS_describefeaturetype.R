@@ -8,7 +8,7 @@
 #' @param url URL of the WFS service. See [WFS_get_url()] for the default
 #' @param version software version for WFS service request. See [WFS_get_version()] for the default
 #' @param debug Logical indicating the httr response is to be returned
-#' @param verbose Logical indicating full request and httr response code will be displayed
+#' @param httrverbose Logical indicating full request and httr response code will be displayed
 #' @param out_path (optional) path where the `FeatureType` info is to be saved in xml format. Only valid when `typenames` contains one featuretype
 #' @return a `tibble` with `typename` and `name` (the fieldnames)
 #' @export
@@ -22,7 +22,7 @@ WFS_describefeaturetype <-
            url      = WFS_get_url(),
            version  = WFS_get_version(),
            debug    = F,
-           verbose  = F,
+           httrverbose  = F,
            out_path = NULL) {
     if (! (version %in% c('1.1.0','2.0.0') ) )
        return("only version '1.1.0' and '2.0.0' are allowed")
@@ -34,7 +34,7 @@ WFS_describefeaturetype <-
                url      = url,
                version  = version,
                debug    =  debug,
-               verbose  = verbose,
+               httrverbose  = httrverbose,
                out_path = NULL) {
         url       <- httr::parse_url(url)
         url$query <- list(
@@ -47,7 +47,7 @@ WFS_describefeaturetype <-
         res       <- WFS_GET_request (request,
                            debug = debug,
                            to_sf = F,
-                           verbose = verbose)
+                           httrverbose = httrverbose)
         if (inherits(res, 'response'))
           return(res)
         if ((!inherits(res, 'xml_document')) ||
@@ -86,7 +86,7 @@ WFS_describefeaturetype <-
         url = url,
         version = version,
         debug = debug,
-        verbose = verbose,
+        httrverbose = httrverbose,
         out_path = out_path)
       )
     else
@@ -97,7 +97,7 @@ WFS_describefeaturetype <-
         url = url,
         version = version,
         debug = debug,
-        verbose = verbose,
+        httrverbose = httrverbose,
         out_path = out_path
       )
     )

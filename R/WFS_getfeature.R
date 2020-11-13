@@ -50,10 +50,16 @@
 #'    filter  = f5)
 #' }
 
-WFS_getfeature <- function(typename, ..., url=WFS_get_url(),version=WFS_get_version(),debug=F,verbose=F){
+WFS_getfeature <- function(typename, ...,
+                           url=WFS_get_url(),
+                           version=WFS_get_version(),
+                           debug=F,
+                           sfverbose=F,
+                           httrverbose=rep(F,4)){
   cv <- check_version(version )
   if (! is.null(cv) )  return(cv)
 
+  base_url <- url
   url       <- httr::parse_url(url)
   url$query <- list(service = "WFS"
         ,version    = version
@@ -62,10 +68,13 @@ WFS_getfeature <- function(typename, ..., url=WFS_get_url(),version=WFS_get_vers
         ,outputFormat = "application/json"
         )
   url$query = append(url$query,list(...))
+  url$query <- WFS_util_keep_unique(url$query, keep_first = F)
   url$query <- build_request_GET(url$query)
   request <- httr::build_url(url)
 
-  res <- WFS_GET_request (request,debug=debug,to_sf=T,verbose=verbose)
+  res <- WFS_GET_request (request, debug=debug,
+             to_sf=T, sfverbose=sfverbose, httrverbose=httrverbose)
+
   if (inherits(res, 'data.frame'))
     row.names(res) <- NULL
   if (inherits(res, 'xml_document')) {
@@ -101,31 +110,25 @@ WFS_getfeature <- function(typename, ..., url=WFS_get_url(),version=WFS_get_vers
 #' \dontrun{
 #' }
 
-WFS_GET_request <- function (request,debug=F,to_sf=T,verbose=F){
-  suppressWarnings(res <- try(httr::GET(request),silent=TRUE))
-  if (debug || ('try-error' %in% class(res))) return(res)
-  if (verbose)
-    cat(URLdecode(res$url),httr::http_status(res)$message,sep='\n')
-  if (httr::http_error(res)) return(httr::http_status(res)$message)
-	cnt1 = tolower(httr::headers(res)$`content-type`)
-  res_data <- httr::content(res,encoding = 'UTF-8',as='text')
-  if (grepl('json',cnt1,fixed = T)) {
-    if (to_sf) {
-      r <- sf::read_sf(res_data,quiet=T,as_tibble = F)
+WFS_GET_request <- function (request,
+           debug = F,
+           to_sf = T,
+           sfverbose = F,
+           httrverbose = rep(F, 4)) {
+  suppressWarnings(res <- try({
+    if (any(httrverbose == T)) {
+      res <- httr::GET(request,
+                       do.call(httr::verbose, as.list(httrverbose)))
     } else {
-      r <- jsonlite::fromJSON(res_data)
+      res <- httr::GET(request)
     }
-  } else if (grepl('xml',cnt1,fixed = T)) {
-      r <- xml2::read_xml(res_data, options = "NOWARNING")
-  } else {
-      r <- res_data
-  }
-  r
+    # httr::GET(request)
+  }, silent = TRUE)
+  )
+  handle_res(res,debug,to_sf,sfverbose)
 }
 
 build_request_GET <- function(reqlist) {
-
-  reqlist <- WFS_util_keep_unique(reqlist, keep_first = F)
   version <- reqlist[["version"]] # (latest) version
   vnames  <- WFS_util_v12_names()
   replarg <- (ifelse (version == '1.1.0',

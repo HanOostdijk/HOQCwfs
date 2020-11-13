@@ -8,20 +8,21 @@
 #' @param url URL of the WFS service. See [WFS_get_url()] for the default
 #' @param version software version for WFS service request. See [WFS_get_version()] for the default
 #' @param debug Logical indicating the httr response is to be returned
-#' @param verbose Logical indicating full request and httr response code will be displayed
+#' @param sfverbose Logical indicating if [sf::read_sf()] messages will be displayed
+#' @param httrverbose Logical vector of up to four entries to be used in [httr::verbose()]
 #' @return a `sf` object with the requested information (the 'id' variable and the geometry will always be included)
 #' or a character string with an error message
-### #' @export
+#' @export
 #' @details Arguments that are recognized by the GetFeature request are:
 #' - `bbox        ` (not in combination with `cql_filter` or `filter`)
 #' - `cql_filter  `
 #' - `filter      `
 #' - `resultType` - default 'results' and alternative 'hits'. In the latter case only the number of matched features (`numbeOfFeatures` in 1.1.0 or `numberMatched` in 2.0.0) is returned
-#' - `srsname     ` indicate the crs for the coordinates e.g. `srsname='EPSG:4326'`
+#' - `srsname     ` indicate the crs for the coordinates of the output e.g. `srsname='EPSG:4326'`
 #' - `propertyname` the name of the fields to retrieve. The `id` and `geometry` fields will always be included.
 #' - `startIndex  ` number of features to skip before retrieving features ( the output with `startindex=1` will start with the second feature )
 #' - `maxfeatures ` (version `1.1.0`) or `count` (version `2.0.0`) indicates the number of features to retrieve. When the wrong argument is specified it will be translated in the other.
-#' The `GetFeature` argument `outputFormat` has value 'application/json'but this can be overwritten
+#' The `GetFeature` argument `outputFormat` has value 'application/json' but this can be overwritten
 #'
 #' @examples
 #' \dontrun{
@@ -56,9 +57,10 @@ WFS_getfeature2 <- function(typename, ...,
                             version=WFS_get_version(),
                             debug=F,
                             sfverbose=F,
-                            WFSverbose=rep(F,4)){
-  if (! (version %in% c('1.1.0','2.0.0') ) )
-    return("only version '1.1.0' and '2.0.0' are allowed")
+                            httrverbose=rep(F,4)){
+  cv <- check_version(version )
+  if (! is.null(cv) )  return(cv)
+
   base_url <- url
   url       <- httr::parse_url(url)
   url$query <- list(service = "WFS"
@@ -70,8 +72,10 @@ WFS_getfeature2 <- function(typename, ...,
   url$query = append(url$query,list(...))
   url$query <- WFS_util_keep_unique(url$query, keep_first = F)
   request <- build_request_POST(url$query)
-  res <- WFS_POST_request (request,base_url,debug=debug,
-                to_sf=T,sfverbose=sfverbose,WFSverbose=WFSverbose)
+
+  res <- WFS_POST_request (request, base_url, debug=debug,
+            to_sf=T, sfverbose=sfverbose, httrverbose=httrverbose)
+
   if (inherits(res, 'data.frame'))
     row.names(res) <- NULL
   if (inherits(res, 'xml_document')) {
@@ -97,12 +101,14 @@ WFS_getfeature2 <- function(typename, ...,
 #' Retrieve information with the POST request
 #'
 #' Retrieve the requested information
-#' @param request Character string with expanded url
+#' @param request Character string with POST request
+#' @param url URL of the WFS service. See [WFS_get_url()] for the default
 #' @param debug Logical indicating the httr response is to be returned
-#' @param verbose Logical indicating full request and httr response code will be displayed
+#' @param sfverbose Logical indicating if [sf::read_sf()] messages will be displayed
+#' @param httrverbose Logical vector of up to four entries to be used in [httr::verbose()]
 #' @return a `json` object when that is returned but converted to an `sf` object when `to_sf==T`.
-#' When the GET returns an `xml` object it is returned but unpacked if it is an `ExceptionReport`.
-###   #' @export
+#' When the GET returns an `xml` object it is returned.
+#' @export
 #' @examples
 #' \dontrun{
 #' }
@@ -112,38 +118,19 @@ WFS_POST_request <-   function (request,
             debug = F,
             to_sf = T,
             sfverbose = F,
-            WFSverbose = rep(F,4)) {
+            httrverbose = rep(F,4)) {
     suppressWarnings(res <- try({
-        if (any(WFSverbose==T) ) {
+        if (any(httrverbose==T) ) {
           res <- httr::POST(url, body = request,
                           httr::content_type("text/xml"),
-                          do.call(httr::verbose,as.list(WFSverbose)) )
+                          do.call(httr::verbose,as.list(httrverbose)) )
         } else {
           res <- httr::POST(url, body = request,
                           httr::content_type("text/xml") )
         }
     }, silent = TRUE))
-    if (debug || ('try-error' %in% class(res)))
-      return(res)
-    if (httr::http_error(res))
-      return(httr::http_status(res)$message)
-    cnt1 = tolower(httr::headers(res)$`content-type`)
-    res_data <- httr::content(res, encoding = 'UTF-8', as  =  'text')
-    if (grepl('json', cnt1, fixed = T))
-    {
-      if (to_sf)
-      {
-        r <- sf::read_sf(res_data, quiet  = sfverbose==F, as_tibble = F)
-      } else {
-        r <- jsonlite::fromJSON(res_data)
-      }
-    } else if (grepl('xml', cnt1, fixed = T)) {
-      r <- xml2::read_xml(res_data, options = "NOWARNING")
-    } else {
-      r <- res_data
-    }
-    r
-  }
+      handle_res(res,debug,to_sf,sfverbose)
+}
 
 
 build_request_POST <- function(reqlist) {
