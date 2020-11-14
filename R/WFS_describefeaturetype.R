@@ -44,7 +44,7 @@ WFS_describefeaturetype <-
           , typename = typename
         )
         request   <- httr::build_url(url)
-        res       <- WFS_GET_request (request,
+        res       <- httr_GET_request (request,
                            debug = debug,
                            to_sf = F,
                            httrverbose = httrverbose)

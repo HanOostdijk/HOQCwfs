@@ -1,29 +1,176 @@
 
-test_that("WFS_getfeature checks", {
-  # library(HOQCwfs)
-  # library(testthat)
+test_that("WFS_getfeature: set 1", {
+  # test that there are no differences for version 1.1.0 and 2.0.0
+  #   with GET/POST for simple query  with only maxfeatures/count and startindex
+  # test that maxfeatures/count are accepted by both versions and
+  # only versions 1.1.0 and 2.0.0 are accepted
+  # NB without startindex can give different results than startindex=0 : the latter apparently sorts !?
 
-  L1a <- list(a=1,a=2,b=3,a=4,c=5,b=6)
-  L1b <- list(a=1,b=3,c=5)
-  L1c <- list(a=4,b=6,c=5)
-  expect_identical( WFS_util_keep_unique(L1a,keep_first = T),L1b)
-  expect_identical( WFS_util_keep_unique(L1a,keep_first = F),L1c)
-
-  typename <- 'topp:gidw_groenbomen'
-  version1 <- '1.1.0'
-
-  wfs0      <- WFS_getfeature(typename, httrType="GET",version=version1,
-              startindex=3,maxfeatures=5)
-  wfs1      <- WFS_getfeature(typename, httrType="POST",version=version1,
-              startindex=3,maxfeatures=5)
-  expect_equal(dim(wfs0)[1],5)
-  expect_equal(wfs0,wfs1)
-
-  typename <- 'topp:gidw_groenbomen'
+  # problem with version 2.0.0 POST for Amstelveen data is included
+  typename <- "wijkenbuurten2019:cbs_buurten_2019" # or typename <- "cbs_buurten_2019"
   version1 <- '1.1.0'
   version2 <- '2.0.0'
-  version3 <- 'x.3.0'
-  pnames    <- c("boom_omschrijf", "jaar")
+  version3 <- '3.0.0'
+  alturl   <- "https://geodata.nationaalgeoregister.nl/wijkenbuurten2019/wfs"
+
+  wfs0a      <- WFS_getfeature(typename, url=alturl,
+                  httrType="GET",version=version1,
+                  startindex=0,maxfeatures=8)
+  wfs0b      <- WFS_getfeature(typename, url=alturl,
+                  httrType="GET",version=version1,
+                  startindex=0,count=8)
+  wfs1      <- WFS_getfeature(typename, url=alturl,
+                  httrType="GET",version=version1,
+                  startindex=3,maxfeatures=5)
+  wfs2      <- WFS_getfeature(typename, url=alturl,
+                  httrType="POST",version=version1,
+                  startindex=3,maxfeatures=5)
+  wfs3      <- WFS_getfeature(typename, url=alturl,
+                   httrType="GET",version=version2,
+                   startindex=3,maxfeatures=5)
+  wfs4      <- WFS_getfeature(typename, url=alturl,
+                   httrType="POST",version=version2,
+                   startindex=3,maxfeatures=5)
+  wfs5      <- WFS_getfeature(typename, url=alturl,
+                   httrType="GET",version=version3,
+                   startindex=3,maxfeatures=5)
+  wfs6      <- WFS_getfeature(typename, url=alturl,
+                   httrType="POST",version=version3,
+                   startindex=3,maxfeatures=5)
+
+  expect_equal(dim(wfs0a)[1],8)
+  expect_equal(wfs0a,wfs0b)
+  expect_equal(dim(wfs1)[1],5)
+  expect_equal(wfs1,dplyr::slice(wfs0a,4:8))
+  expect_equal(wfs2,wfs1)
+  expect_equal(dim(wfs1)[1],5)
+  expect_equal(wfs2,wfs1)
+  expect_equal(wfs3,wfs1)
+  expect_equal(wfs4,wfs1)
+  expect_equal(wfs5,"only version '1.1.0' and '2.0.0' are allowed")
+  expect_equal(wfs6,"only version '1.1.0' and '2.0.0' are allowed")
+
+  expect_error( WFS_getfeature(typename, url=alturl,
+                   httrType="GOST",version=version1,
+                   startindex=3,maxfeatures=5),
+                '\'arg\' should be one of "GET", "POST"')
+
+  expect_error( WFS_getfeature(typename, url=alturl,
+                   httrType="GOST",version=version1,
+                   startindex=3,maxfeatures=5),
+                '\'arg\' should be one of "GET", "POST"')
+
+  typename <- 'topp:gidw_groenbomen'
+  wfs4a      <- WFS_getfeature(typename,url=WFS_get_url(),
+                   httrType="POST",version=version2,
+                   startindex=3,maxfeatures=5)
+  expect_equal(wfs4a,paste0("java.lang.RuntimeException: java.io.IOException: ",
+               "Schema &apos;bereikbaarheid_wfs&apos; does not exist.\n",
+               "java.io.IOException: Schema &apos;bereikbaarheid_wfs&apos; ",
+               "does not exist.\nSchema &apos;bereikbaarheid_wfs&apos; does not exist."))
+
+})
+
+test_that("WFS_getfeature set2", {
+  # test that there are no differences for version 1.1.0 and 2.0.0
+  #   with GET/POST for simple query  with resultType='hits'
+
+  typename <- "wijkenbuurten2019:cbs_buurten_2019"
+  alturl   <- "https://geodata.nationaalgeoregister.nl/wijkenbuurten2019/wfs"
+
+  comb     <- expand.grid(version  = c('1.1.0','2.0.0'),
+                      httrType = c("GET","POST"))
+  count    <-purrr::map(purrr::array_branch(comb,1), function(vp){
+           WFS_getfeature(typename,url=alturl,resultType='hits',
+                     version=vp[1],httrType=vp[2])
+  })
+  count <- unlist(count)
+  expect_vector(count,ptype = double(), size = 4)
+  expect_true(count[1] > 0)
+  expect_true(count[1] < Inf)
+  expect_true(all(count==count[1]))
+})
+
+
+
+test_that("WFS_getfeature set3", {
+  # test that there are no differences for version 1.1.0 and 2.0.0
+  #   with GET/POST for column selection with propertyname='....'
+  # NB the field geometry is always returned but empty if it is not requested
+  # with the correct name ('geom' in this case)
+  pnames   <- c("buurtcode", "buurtnaam","geom")
+  typename <- "cbs_buurten_2019" # "wijkenbuurten2019:cbs_buurten_2019"
+  alturl   <- "https://geodata.nationaalgeoregister.nl/wijkenbuurten2019/wfs"
+
+  comb     <- expand.grid(version  = c('1.1.0','2.0.0'),
+                      httrType = c("GET","POST"))
+  res      <- purrr::map(purrr::array_branch(comb,1), function(vp){
+               WFS_getfeature(typename, url=alturl,
+                      version=vp[1],httrType=vp[2],
+                      propertyname=paste(pnames,collapse=','),
+                      startindex=0,maxfeatures=5)
+
+     })
+
+  expect_true(inherits(res[[1]],"sf"))
+  expect_equal(dim(res[[1]]),c(5,1+length(pnames)))
+  expect_equal(names(res[[1]]),c("id", "buurtcode", "buurtnaam", "geometry" ))
+  expect_equal(res[[1]],res[[2]])
+  expect_equal(res[[2]],res[[3]])
+  expect_equal(res[[3]],res[[4]])
+})
+
+test_that("WFS_getfeature set4", {
+  # test that there are no differences for version 1.1.0 and 2.0.0
+  #   with GET/POST for SRS/CRS selection with srsname='....'
+  typename <- "cbs_buurten_2019" # "wijkenbuurten2019:cbs_buurten_2019"
+  alturl   <- "https://geodata.nationaalgeoregister.nl/wijkenbuurten2019/wfs"
+
+  comb     <- expand.grid(version  = c('1.1.0','2.0.0'),
+                      httrType = c("GET","POST"))
+  res      <- purrr::map(purrr::array_branch(comb,1), function(vp){
+               WFS_getfeature(typename, url=alturl,
+                      version=vp[1],httrType=vp[2],
+                      srsname='EPSG:4326',
+                      startindex=0,maxfeatures=5)
+
+     })
+
+  expect_true(inherits(res[[1]],"sf"))
+  expect_equal(sf::st_crs(res[[1]],parameters=TRUE)$epsg,4326)
+  expect_equal(dim(res[[1]])[1],5)
+  expect_equal(res[[1]],res[[2]])
+  expect_equal(res[[2]],res[[3]])
+  expect_equal(res[[3]],res[[4]])
+
+   res      <- purrr::map(purrr::array_branch(comb,1), function(vp){
+               WFS_getfeature(typename, url=alturl,
+                      version=vp[1],httrType=vp[2],
+                    #  srsname='EPSG:4326', # so default expected
+                      startindex=0,maxfeatures=5)
+
+     })
+
+  cap1   <- WFS_getcapabilities(url=alturl)
+  defcrs <-tail(strsplit(
+             WFS_featuretypes(cap1, filternames = typename)$defaultcrs,
+             ':')[[1]],1)
+
+  expect_true(inherits(res[[1]],"sf"))
+  expect_equal(sf::st_crs(res[[1]],parameters=TRUE)$epsg,as.numeric(defcrs))
+  expect_equal(dim(res[[1]])[1],5)
+  expect_equal(res[[1]],res[[2]])
+  expect_equal(res[[2]],res[[3]])
+  expect_equal(res[[3]],res[[4]])
+})
+
+
+
+test_that("WFS_getfeature set5", {
+  typename <-"topp:gidw_groenbomen"
+  pnames   <- c("boom_omschrijf", "jaar")
+  version1 <- '1.1.0'
+  version2 <- '2.0.0'
   # tests for case without queries 1.1.0 and 2.0.0
   fti1     <- WFS_describefeaturetype(typename,version=version1)$name
   fti2     <- WFS_describefeaturetype(typename,version=version2)$name
@@ -34,8 +181,6 @@ test_that("WFS_getfeature checks", {
   wfs2     <-  WFS_getfeature(typename,version=version2)
   expect_identical(wfs1,wfs2)
   expect_identical(fti1a,names(wfs1))
-  wfs3e    <-  WFS_getfeature(typename,version=version3)
-  expect_identical(wfs3e,"only version '1.1.0' and '2.0.0' are allowed")
   wfs3f    <-  WFS_getfeature(typename,version=version1,resultType='hits' )
   wfs3g    <-  WFS_getfeature(typename,version=version2,resultType='hits' )
   expect_identical(wfs3f,wfs3g)

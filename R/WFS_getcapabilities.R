@@ -29,7 +29,7 @@ WFS_getcapabilities <- function(
                     ,version = version
                     ,request = "GetCapabilities")
   request   <- httr::build_url(url)
-  xml_doc <- WFS_GET_request (request, debug=debug,
+  xml_doc <- httr_GET_request (request, debug=debug,
                               to_sf=F,httrverbose=httrverbose)
   handle_cap_output(xml_doc,debug,out_path)
 }
@@ -87,7 +87,7 @@ WFS_getcapabilities_POST <- function(
           , ta=glue::glue('service="WFS" version="{version}" {xmlns}' )
         )
   fg0  <- glue::glue_collapse(c(fgh,fg1),sep='\n')
-  xml_doc  <- HOQCwfs:::WFS_POST_request(fg0,url,debug = debug,
+  xml_doc  <- httr_POST_request(fg0,url,debug = debug,
                                         to_sf = F, httrverbose = httrverbose)
   handle_cap_output(xml_doc,debug,out_path)
 }

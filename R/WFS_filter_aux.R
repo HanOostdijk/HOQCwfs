@@ -69,6 +69,18 @@ build_filter <- function (..., version=WFS_get_version(),sep=WFS_get_sep()) {
 #' @export
 #' @rdname wfsfilteraux
 
+propertyname_xml <-
+  function(propname, version) {
+    if (version == '1.1.0') {
+      bg('PropertyName', propname)
+    } else {
+      bg('ValueReference', propname)
+    }
+  }
+
+#' @export
+#' @rdname wfsfilteraux
+
 propeq_xml <-
   function(propname, propvalue, version = WFS_get_version()) {
     if (!(version %in% c('1.1.0', '2.0.0')))

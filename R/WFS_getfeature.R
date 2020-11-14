@@ -60,7 +60,7 @@ WFS_getfeature <- function(typename, ...,
     if (httrType == "GET") {
       url$query <- build_request_GET(url$query)
       request <- httr::build_url(url)
-      res <- WFS_GET_request (
+      res <- httr_GET_request (
         request,
         debug = debug,
         to_sf = T,
@@ -69,9 +69,9 @@ WFS_getfeature <- function(typename, ...,
       )
     } else {
       request <- build_request_POST(url$query)
-      res <- WFS_POST_request (
-        request,
+      res <- httr_POST_request (
         base_url,
+        request,
         debug = debug,
         to_sf = T,
         sfverbose = sfverbose,
@@ -100,71 +100,6 @@ WFS_getfeature <- function(typename, ...,
     }
     res
   }
-
-#' Retrieve information with the GET request
-#'
-#' Retrieve the requested information
-#' @param request Character string with expanded url
-#' @param debug Logical indicating the httr response is to be returned
-#' @param verbose Logical indicating full request and httr response code will be displayed
-#' @return a `json` object when that is returned but converted to an `sf` object when `to_sf==T`.
-#' When the GET returns an `xml` object it is returned but unpacked if it is an `ExceptionReport`.
-#' @export
-#' @examples
-#' \dontrun{
-#' }
-
-WFS_GET_request <- function (request,
-           debug = F,
-           to_sf = T,
-           sfverbose = F,
-           httrverbose = rep(F, 4)) {
-  suppressWarnings(res <- try({
-    if (any(httrverbose == T)) {
-      res <- httr::GET(request,
-                       do.call(httr::verbose, as.list(httrverbose)))
-    } else {
-      res <- httr::GET(request)
-    }
-    # httr::GET(request)
-  }, silent = TRUE)
-  )
-  handle_res(res,debug,to_sf,sfverbose)
-}
-
-#' Retrieve information with the POST request
-#'
-#' Retrieve the requested information
-#' @param request Character string with POST request
-#' @param url URL of the WFS service. See [WFS_get_url()] for the default
-#' @param debug Logical indicating the httr response is to be returned
-#' @param sfverbose Logical indicating if [sf::read_sf()] messages will be displayed
-#' @param httrverbose Logical vector of up to four entries to be used in [httr::verbose()]
-#' @return a `json` object when that is returned but converted to an `sf` object when `to_sf==T`.
-#' When the GET returns an `xml` object it is returned.
-#' @export
-#' @examples
-#' \dontrun{
-#' }
-
-WFS_POST_request <-   function (request,
-            url = WFS_get_url(),
-            debug = F,
-            to_sf = T,
-            sfverbose = F,
-            httrverbose = rep(F,4)) {
-    suppressWarnings(res <- try({
-        if (any(httrverbose==T) ) {
-          res <- httr::POST(url, body = request,
-                          httr::content_type("text/xml"),
-                          do.call(httr::verbose,as.list(httrverbose)) )
-        } else {
-          res <- httr::POST(url, body = request,
-                          httr::content_type("text/xml") )
-        }
-    }, silent = TRUE))
-      handle_res(res,debug,to_sf,sfverbose)
-}
 
 build_request_GET <- function(reqlist) {
   version <- reqlist[["version"]] # (latest) version
@@ -198,9 +133,22 @@ build_request_POST <- function(reqlist) {
   attribs <- WFS_util_xmlns_defs(version, as.txt = T)
   filter  <- reqlist[["filter"]]
   typen   <- reqlist[["typen"]]
+  propertyname  <- reqlist[["propertyname"]]
+  if (is.null(propertyname)) {
+    propertyname <- NULL
+  } else {
+    propertyname <-
+         paste( purrr::map_chr(strsplit(propertyname,',')[[1]],
+                   ~propertyname_xml(.,'1.1.0')), # no ValueReference
+                collapse= ''  )
+  }
+  srsname  <- reqlist[["srsname"]]
+  srsname  <- ifelse(is.null(srsname),'',g(' srsName="{srsname}"'))
+
   fg2     <- fg('wfs:Query'
+                , ifelse (is.null(propertyname), '', propertyname)
                 , ifelse (is.null(filter), '', filter)
-                , ta =g('{v9}="{typen}" srsName="EPSG:28992"',v9=replarg['typen'])
+                , ta =g('{v9}="{typen}"{srsname}',v9=replarg['typen'])
              )
   outputFormat <- reqlist[["outputformat"]]
   maxf   <- reqlist[["maxf"]]

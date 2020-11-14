@@ -2,6 +2,7 @@
 % Please edit documentation in R/WFS_filter_aux.R, R/WFS_filteraux.R
 \name{build_filter}
 \alias{build_filter}
+\alias{propertyname_xml}
 \alias{propeq_xml}
 \alias{bbox_xml}
 \alias{convert_bbox}
@@ -10,6 +11,8 @@
 \title{Auxiliary functions to create filters}
 \usage{
 build_filter(..., version = WFS_get_version(), sep = WFS_get_sep())
+
+propertyname_xml(propname, version)
 
 propeq_xml(propname, propvalue, version = WFS_get_version())
 
