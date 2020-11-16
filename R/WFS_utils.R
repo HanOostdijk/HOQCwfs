@@ -149,7 +149,7 @@ WFS_util_xmlns_defs <- function(version=WFS_get_version(),as.txt=T) {
       , 'xmlns:gml="http://www.opengis.net/gml"'
       , 'xmlns:ogc="http://www.opengis.net/ogc"'
       , 'xmlns:xlink="http://www.w3.org/1999/xlink"'
-      , 'xsi:schemaLocation="http://www.opengis.net/wfs"'
+      , 'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd"'
     )
   }
   if (as.txt) defs <- paste(defs,collapse = ' ')

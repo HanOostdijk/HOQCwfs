@@ -6,6 +6,7 @@
 #' While evaluating these elements the version is temporarily set to the argument `version` of `build_filter` unless explicitly
 #' overwritten.
 #' - The function `propeq_xml` creates a `PropertyIsEqualTo` XML clause
+#' - The function `propertyname_xml` creates a `PropertyName` or `ValueReference` clause
 #' - The function `bbox_xml` creates a `BBOX` XML clause
 #' - The function `convert_bbox` convert a bbox from one CRS to another
 #' - The function `convert_points` convert a set of points (in vector or matrix form) from one CRS to another
@@ -14,7 +15,8 @@
 #' @param ... XML elements to be added to filter
 #' @param version Character string with the WFS request version
 #' @param sep NULL for the default separator (set by [WFS_set_sep()]) or required separator otherwise
-#' @param propname Character string with the `PropertyName` (1.1.0) or `ValueReference` (2.0.0)
+#' @param propname Character string with the `PropertyName` (1.1.0) or `ValueReference` (2.0.0)#'
+#' @param nopref Logical scalar indicating the 'ogc:' pref is not to be used in `propertyname_xml`
 #' @param gemprop Character string with the name of the geometric field
 #' @param crs_in Character string with the name of the input crs (e.g. `"EPSG:4326"` )
 #' @param crs_out Character string with the name of the output crs (e.g. `"EPSG:28992"` )
@@ -70,11 +72,14 @@ build_filter <- function (..., version=WFS_get_version(),sep=WFS_get_sep()) {
 #' @rdname wfsfilteraux
 
 propertyname_xml <-
-  function(propname, version) {
+  function(propname, version,nopref=T) {
     if (version == '1.1.0') {
-      bg('PropertyName', propname)
+      if (nopref)
+         bg('PropertyName', propname)
+      else
+         bg('ogc:PropertyName', propname)
     } else {
-      bg('ValueReference', propname)
+      bg('fes:ValueReference', propname)
     }
   }
 

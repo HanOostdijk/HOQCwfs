@@ -112,7 +112,7 @@ build_request_GET <- function(reqlist) {
 }
 
 
-build_request_POST <- function(reqlist) {
+build_request_POST <- function(reqlist,sep='') {
   g  <- glue::glue
   gc <- glue::glue_collapse
 
@@ -144,9 +144,10 @@ build_request_POST <- function(reqlist) {
   }
   srsname  <- reqlist[["srsname"]]
   srsname  <- ifelse(is.null(srsname),'',g(' srsName="{srsname}"'))
-
+  sortby  <- reqlist[["sortby"]]
   fg2     <- fg('wfs:Query'
                 , ifelse (is.null(propertyname), '', propertyname)
+                , ifelse (is.null(sortby), '', sortby_xml(sortby,version,sep)) # ? no ValueReference ?
                 , ifelse (is.null(filter), '', filter)
                 , ta =g('{v9}="{typen}"{srsname}',v9=replarg['typen'])
              )
@@ -169,6 +170,26 @@ build_request_POST <- function(reqlist) {
   )
   fgh <- '<?xml version="1.0" encoding="ISO-8859-1"?>'
   gc(c(fgh, fg1), sep = '\n')
+}
+
+sortby_xml <- function (sortby, version, sep = WFS_get_sep()) {
+  x = strsplit(stringr::str_squish(strsplit(sortby, ',')[[1]]), ' ')
+  fields = purrr::map_chr(x,  ~ purrr::pluck(., 1, .default = ''))
+  so = tolower(purrr::map_chr(x,  ~ stringr::str_sub(purrr::pluck(., 2, .default =
+                                                                    ''), 1, 1)))
+  so[so == 'd'] <- 'DESC'
+  so[so != 'DESC'] <- 'ASC'
+
+  if (version == '1.1.0')
+    v <- function(s)  paste0('ogc:', s)
+  else
+    v <- function(s)  paste0('fes:', s)
+  sps <- purrr::map2(fields, so,  ~
+                       fg(v('SortProperty')
+                         , propertyname_xml(.x, version = version,nopref=F)
+                         , bg(v('SortOrder'), .y)
+                       ))
+  fg(v('SortBy'),  paste(sps, collapse = sep))
 }
 
 
