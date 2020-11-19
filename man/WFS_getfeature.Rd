@@ -11,6 +11,7 @@ WFS_getfeature(
   url = WFS_get_url(),
   version = WFS_get_version(),
   debug = F,
+  to_sf = T,
   sfverbose = F,
   httrverbose = rep(F, 4)
 )
@@ -27,6 +28,8 @@ WFS_getfeature(
 \item{version}{software version for WFS service request. See \code{\link[=WFS_get_version]{WFS_get_version()}} for the default}
 
 \item{debug}{Logical indicating the httr response is to be returned}
+
+\item{to_sf}{Logical indicating if a \code{json} object should be converted to an \code{sf} object}
 
 \item{sfverbose}{Logical indicating if \code{\link[sf:st_read]{sf::read_sf()}} messages will be displayed}
 

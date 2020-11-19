@@ -1,4 +1,7 @@
 
+library(HOQCwfs)
+library(testthat)
+
 test_that("WFS_getfeature: set 1", {
   # test that there are no differences for version 1.1.0 and 2.0.0
   #   with GET/POST for simple query  with only maxfeatures/count and startindex
@@ -56,9 +59,9 @@ test_that("WFS_getfeature: set 1", {
                    httrType="POST",version=version2,
                    startindex=3,maxfeatures=5)
   expect_equal(wfs4a,paste0("java.lang.RuntimeException: java.io.IOException: ",
-               "Schema &apos;bereikbaarheid_wfs&apos; does not exist.\n",
-               "java.io.IOException: Schema &apos;bereikbaarheid_wfs&apos; ",
-               "does not exist.\nSchema &apos;bereikbaarheid_wfs&apos; does not exist."))
+               "Schema &apos;brandkranen_asv_amr&apos; does not exist.\n",
+               "java.io.IOException: Schema &apos;brandkranen_asv_amr&apos; ",
+               "does not exist.\nSchema &apos;brandkranen_asv_amr&apos; does not exist."))
 
 })
 
@@ -183,8 +186,199 @@ test_that("WFS_getfeature set5", {
 })
 
 
-
 test_that("WFS_getfeature set6", {
+  # test that there are no differences for version 1.1.0 and 2.0.0
+  #   with GET/POST for various outputformats
+  typename <- "cbs_buurten_2019" # "wijkenbuurten2019:cbs_buurten_2019"
+  alturl   <- "https://geodata.nationaalgeoregister.nl/wijkenbuurten2019/wfs"
+
+  comb     <- expand.grid(version  = c('1.1.0','2.0.0'),
+                      httrType = c("GET","POST"))
+  cap1     <- WFS_getcapabilities(url=alturl,version='1.1.0')
+  cap2     <- WFS_getcapabilities(url=alturl,version='2.0.0')
+  ofmt1    <- sort(WFS_util_parameter_values(cap1,'GetFeature','outputFormat'))
+  ofmt2    <- sort(WFS_util_parameter_values(cap1,'GetFeature','outputFormat'))
+  expect_identical(ofmt1,ofmt2)
+  comb     <- expand.grid(version  = c('1.1.0','2.0.0'),
+                      httrType = c("GET","POST"),
+                      ofmt =sort(ofmt1))
+  res      <- purrr::map(purrr::array_branch(comb,1), function(vp){
+               WFS_getfeature(typename, url=alturl,
+                      version=vp[1],httrType=vp[2],outputFormat=vp[3],
+                      startindex=0,maxfeatures=1)
+  })
+  classes  <- purrr::map(res,class)
+
+  # json outputs -> sf
+  json1    <- grep('json',comb$ofmt,fixed = T)
+  sf1      <- grep('sf',classes,fixed=T)
+  expect_identical(json1,sf1)
+  expect_equal(unique(as.character(comb$ofmt[json1])),
+               c("application/json", "json") )
+
+  eq_geom  <- purrr:: map_lgl(res[sf1],
+                              ~identical(sf::st_geometry(.),
+                                         sf::st_geometry(res[[sf1[1]]])))
+  expect_true(all(eq_geom))
+  eq_geom  <- purrr:: map_lgl(res[sf1],
+                              ~identical(sf::st_drop_geometry(.),
+                                         sf::st_drop_geometry(res[[sf1[1]]])))
+  expect_true(all(eq_geom))
+
+  # csv outputs -> char
+  csv1     <- grep('csv',comb$ofmt,fixed = T)
+  char1    <- grep('char',classes,fixed=T)
+  expect_identical(csv1,char1)
+  expect_equal(unique(as.character(comb$ofmt[csv1])),
+               c("csv") )
+
+  eq_char  <- purrr:: map_lgl(res[csv1],
+                              ~identical(.,
+                                         res[[csv1[1]]]))
+  expect_true(all(eq_char))
+  # kml -> xml
+  kml1    <- grep('kml',comb$ofmt,ignore.case = T)
+  expect_equal(unique(as.character(comb$ofmt[kml1])),
+               c("application/vnd.google-earth.kml xml",
+                 "application/vnd.google-earth.kml+xml", "KML" ) )
+  rep1    <- purrr::map(res[kml1],xml2::as_list)
+  eq_kml  <- purrr:: map_lgl(rep1,
+                              ~identical(.,
+                                         rep1[[1]]))
+  expect_true(all(eq_kml))
+  expect_identical(xml2::xml_name(res[[kml1[1]]]),"kml")
+
+  # the other xml (gml)types
+  gml1    <- grep('gml',comb$ofmt,ignore.case = T)
+  ofmt1   <- as.character(comb$ofmt[gml1])
+  # convert from xml_document to list
+  rep1    <- purrr::map(res[gml1],xml2::as_list)
+  eq_rep1 <- purrr::map_lgl(rep1,
+                              ~identical(names(.),"FeatureCollection"))
+  expect_true(all(eq_rep1))
+  # first test results without attributes and geometry
+  rep1na  <- purrr::map(rep1, function(x) {
+    if (is.null(x$FeatureCollection$boundedBy)) {
+      purrr::pluck(x, 1, 1, 1, 42) <- NULL
+    } else {
+      purrr::pluck(x, 1, 2, 1, 42)  <- NULL
+      purrr::pluck(x,1,1) <- NULL
+    }
+    n <- names(purrr::pluck(x, 1, 1, 1))
+    attributes(purrr::pluck(x, 1, 1, 1)) <- NULL # remove fid (gml ?) or id (gml/3.2 ?)attribute
+    names(purrr::pluck(x, 1, 1, 1)) <- n
+    attributes(x$FeatureCollection) <- NULL # remove xlmns attributes and names (member /featuremember)
+    x
+  })
+  eq_rep1na <- purrr::map_lgl(rep1na, ~identical(.,rep1na[[1]]))
+  expect_true(all(eq_rep1na))
+
+  # then test geometry
+  # (we will see differences between gml versions, not GET/POST or WFS version)
+  ix_a      <- seq_along(gml1)
+  rep1g  <- purrr::map(rep1, function(x) {
+    if (is.null(x$FeatureCollection$boundedBy)) {
+      purrr::pluck(x, 1, 1, 1, 42)
+    } else {
+      purrr::pluck(x, 1, 2, 1, 42)
+    }
+  })
+
+  eq_rep1g <- purrr::map_lgl(rep1g, ~identical(.,rep1g[[1]]))
+
+  expect_identical(unique(ofmt1[eq_rep1g]),
+         c("application/gml+xml; version=3.2","gml32","text/xml; subtype=gml/3.2" ))
+  # rep1g[[match(T,eq_rep1g)]] : MultiSurface poslist srsName "urn:ogc:def:crs:EPSG::28992" srsDimension
+
+  ix_b     <- setdiff(ix_a,ix_a[eq_rep1g])
+  rep1gb   <- rep1g[ix_b]
+  ofmt1b   <- ofmt1[ix_b]
+  ix_b      <- seq_along(ofmt1b)
+  eq_rep1gb <- purrr::map_lgl(rep1gb, ~identical(., rep1gb[[1]]))
+  expect_identical(unique(ofmt1b[eq_rep1gb]),
+         c("GML2","text/xml; subtype=gml/2.1.2"))
+  # rep1gb[[match(T,eq_rep1gb)]] : MultiPolygon coordinates srsName http ..../epsg.xml#28992 decimal etc
+
+  ix_c     <- setdiff(ix_b,ix_b[eq_rep1gb])
+  rep1gc   <- rep1gb[ix_c]
+  ofmt1c   <- ofmt1b[ix_c]
+  ix_c      <- seq_along(ofmt1c)
+  eq_rep1gc <- purrr::map_lgl(rep1gc, ~identical(.,rep1gc[[1]]))
+  expect_identical(unique(ofmt1c[eq_rep1gc]),
+         c("gml3","text/xml; subtype=gml/3.1.1"))
+  # rep1gc[[match(T,eq_rep1gc)]] : MultiSurface poslist srsName "urn:x-ogc:def:crs:EPSG:28992" srsDimension
+
+  ix_d <- setdiff(ix_c,ix_c[eq_rep1gc])
+  expect_equal(length(ix_d),0)
+
+  # then test attributes
+  # (we will see the following sets with differences (but not between GET/POST apart from `next` in 2.0.0 )
+  #    gml 3.2  and WFS 1.1.0 versus 2.0.0
+  #    gml 2    all WFS versions
+  #    gml 3.1  and WFS 1.1.0 versus 2.0.0 )
+  ix_a      <- seq_along(gml1)
+  rep1a  <- purrr::map(rep1, function(x) {
+    a <- attributes(x$FeatureCollection)
+    a$timeStamp <- NULL
+    a$`next` <- NULL
+    a
+  })
+
+
+  eq_rep1a <- purrr::map_lgl(rep1a, ~identical(.,rep1a[[1]]))
+  expect_identical(unique(ofmt1[eq_rep1a]),
+         c("application/gml+xml; version=3.2","gml32","text/xml; subtype=gml/3.2" ))
+  comb1 <- cbind(comb[gml1,],nr=1:28)
+  comb1[eq_rep1a,] # gml 3.2 wfs 1.1.0 POST/GET (name "member" numberMatched "unknown" and 1.1.0 in schemaLocation)
+
+  ix_b     <- setdiff(ix_a,ix_a[eq_rep1a])
+  rep1ab   <- rep1a[ix_b]
+  ofmt1b   <- ofmt1[ix_b]
+  comb1b   <- comb1[ix_b,]
+  ix_b     <- seq_along(ofmt1b)
+  eq_rep1ab <- purrr::map_lgl(rep1ab, ~identical(., rep1ab[[1]]))
+  expect_identical(unique(ofmt1b[eq_rep1ab]),
+          c("application/gml+xml; version=3.2","gml32","text/xml; subtype=gml/3.2" ))
+  comb1b[eq_rep1ab,] # gml 3.2 wfs 2.0.0 POST/GET (name "member" numberMatched is filled and 2.0.0 in schemaLocation)
+
+  ix_c     <- setdiff(ix_b,ix_b[eq_rep1ab])
+  rep1ac   <- rep1ab[ix_c]
+  ofmt1c   <- ofmt1b[ix_c]
+  comb1c   <- comb1b[ix_c,]
+  ix_c     <- seq_along(ofmt1c)
+  eq_rep1ac <- purrr::map_lgl(rep1ac, ~identical(., rep1ac[[1]]))
+  expect_identical(unique(ofmt1c[eq_rep1ac]),
+          c( "GML2", "text/xml; subtype=gml/2.1.2"))
+  comb1c[eq_rep1ac,] # gml 2 wfs 1.1.0 / 2.0.0 POST/GET (name "featureMembers" no numberMatched numberOfFeatures )
+
+  ix_d     <- setdiff(ix_c,ix_c[eq_rep1ac])
+  rep1ad   <- rep1ac[ix_d]
+  ofmt1d   <- ofmt1c[ix_d]
+  comb1d   <- comb1c[ix_d,]
+  ix_d     <- seq_along(ofmt1d)
+  eq_rep1ad <- purrr::map_lgl(rep1ad, ~identical(., rep1ad[[1]]))
+  expect_identical(unique(ofmt1d[eq_rep1ad]),
+          c("gml3", "text/xml; subtype=gml/3.1.1" ))
+  comb1d[eq_rep1ad,] # gml 3 wfs 1.1.0 POST/GET
+
+  ix_e     <- setdiff(ix_d,ix_d[eq_rep1ad])
+  rep1ae   <- rep1ad[ix_e]
+  ofmt1e   <- ofmt1d[ix_e]
+  comb1e   <- comb1d[ix_e,]
+  ix_e     <- seq_along(ofmt1e)
+  eq_rep1ae <- purrr::map_lgl(rep1ae, ~identical(., rep1ae[[1]]))
+  expect_identical(unique(ofmt1e[eq_rep1ae]),
+          c( "gml3", "text/xml; subtype=gml/3.1.1"))
+  comb1e[eq_rep1ae,] #  gml3 wfs 2.0.0 POST/GET
+
+  ix_f     <- setdiff(ix_e,ix_e[eq_rep1ae])
+  expect_equal(length(ix_f),0)
+
+
+})
+
+
+test_that("WFS_getfeature set7", {
   typename <-"topp:gidw_groenbomen"
   pnames   <- c("boom_omschrijf", "jaar")
   version1 <- '1.1.0'

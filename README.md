@@ -4,7 +4,6 @@
 ## HOQCwfs
 
 <!-- badges: start -->
-
 <!-- badges: end -->
 
 ### R Web Feature Service (WFS) read-only interface

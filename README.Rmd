@@ -24,7 +24,7 @@ It generates HTML requests for the WFS API.
 
 ### Installation
 
-You can install this version from [GitHub](https://github.com/) with:
+You can install this version from [GitHub](https://github.com/) with: 
 
 ``` r
 # install.packages("devtools")

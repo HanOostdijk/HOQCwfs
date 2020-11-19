@@ -18,12 +18,69 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup,echo=F}
+library(HOQCwfs)
 ```
 
 ### Introduction {#introduction}
-This package contains functions to retrieve information from a Web Feature Service (WFS) resource. 
-It generates HTML requests for the WFS API. 
+This package contains functions to retrieve information from a [Web Feature Service](https://en.wikipedia.org/wiki/Web_Feature_Service) (WFS) resource. 
+The [Open Geospatial Consortium](http://www.opengeospatial.org/) WFS  Interface Standard provides an interface allowing requests for geographical features across the web using platform-independent calls. This package generates such calls in the form of HTML requests in [GET or POST](https://www.w3schools.com/tags/ref_httpmethods.asp) format. Such a request is normally invisible to the user but can be made visible by adding `httrverbose=T` to the function call. 
 
+In this vignette we use a WFS data source that contains information about the trees in the municipality where I live. Apart from the name of the species each record also contains the exact location of the tree.
+
+We will start with an example that retrieves trees of a certain species in a certain [bounding box](https://en.wikipedia.org/wiki/Minimum_bounding_box#Axis-aligned_minimum_bounding_box).  
+To do this we use the [GetFeature](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getfeature) operation of WFS that is called by the package function `WFS_getfeature`. Assuming we did not do a misspecification the result will be a [simple features]() (`sf`) object. An `sf` object (managed by the R package [sf](https://cran.r-project.org/package=sf)) is a `data.frame` with spatial attributes. Instead of reading the whole data set and doing a filtering on the resulting `data.frame` we can add the filter to the `GetFeature` operation and retrieve only the part that we need. For large files this is obviously more efficient.  
+
+From the contents you can deduce that we introduce the package with a typical use case for the `WFS_getfeature` function ([GetFeature](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getfeature) operation). After that, we show how to find out what can be done with the WFS resource by using the `WFS_getcapabilities` ([GetCapabilities](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getcapabilities) operation) function to see which 'sub datasets' (`featuretypes`) can be use and with the `WFS_describetype` ([DescribeFeatureType](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#describefeaturetype) operation) to see which fields a `featuretype` contains.  
+After that we gradually introduce the possibilities to fine-tune the `WFS_getfeature` results.
+
+### Introductory example {#intro-example}
+In this first example we combine a text filter with a spatial filter: we want to retrieve some attributes of all trees of the species `Alnus glutinosa 'Laciniata'` in a certain area. So we need the call to `WFS_getfeature` that is done in the lines `#11` and `#12`. I will start by mentioning the arguments that are not specified there:  
+
+- `url` is not specified and therefore its default is used that can be set by `WFS_set_url` and that standard is set to `r WFS_get_url()`   
+- `version` is not specified and therefore its default is used that can be set by `WFS_set_version` and that standard is set to `r WFS_get_version()`  
+- `httrType` is not specified and therefore its default `GET` is used
+- `typename` in `#11` (and `#3`) indicate the `featuretype` we are interested in. See [Look at the various features of the WFS resource](#look-at-features) section to find out which are available
+- `cql_filter` in `#11` (and `#10`) is the actual filter. See the  [Common Query Language (CQL) Tutorial](https://docs.geoserver.org/stable/en/user/tutorials/cql/cql_tutorial.html) for some general information.
+Apart from `cql_filter=` we can also have `filter=` (see section **TODO**) that expects a filter in terms of `xml` expressions. However hat is not used here.Here the query consists of two parts connected with the logical operator `and` : 
+  - the text filter part in lines `#5` and `#6` that indicates that the field `boom_omschrijf` should have the value `Alnus glutinosa 'Laciniata'` . Note the double quotes around `Laciniata` ! The output of line `#6` shows you how the text filter should be coded
+  - the spatial filter is defined in lines `#7`, `#8` and `#9` : the first line defines the lower-left and upper-right point of the area we are interested in (in coordinates `WGS84` or alternatively named `EPSG:4326`) and the second line and last line formats this in CQL terms. The output of line `#9` shows you how this spatial filter should be coded.
+- `propertyname` in line `#11` (and `#4`) indicate which fields will be returned in the `sf` object. Beside the two mentioned the `id` and `geometry` fields are also returned.
+- `srsName` in line `#12` indicate in which Coordinate Reference System (CRS) the coordinates in the result will be specified. If not specified the default CRS for the featuretype will be used. In this case that is `EPSG:28992`. See [Look at the various features of the WFS resource](#look-at-features).
+
+```{r intro_example_1}
+# devtools::install_github("HanOostdijk/HOQCwfs",build_vignettes=TRUE)       #1
+
+library(HOQCwfs)                                                             #2
+typename  <- 'topp:gidw_groenbomen'                                          #3
+fields    <- 'boom_omschrijf,objec_omschrijf'                                #4
+tree_name <- "Alnus glutinosa ''Laciniata''"                                 #5 
+( tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'") )                  #6
+bbox_wgs84 <- c(4.860793, 52.313319, 4.861587, 52.316493 )                   #7
+bbox_spec <- paste0(glue::glue_collapse(bbox_wgs84,sep=','),",'EPSG:4326'")  #8
+( bbox_spec <- paste0('bbox(geometrie,',bbox_spec,')') )                     #9
+cql_spec  <- paste0(tree_exp,' and ',bbox_spec )                             #10
+wfs_ie    <-  WFS_getfeature(typename,cql_filter=cql_spec,                   #11
+                             propertyname=fields,srsName='EPSG:4326' )       #12
+dim(wfs_ie)                                                                  #13
+print(wfs_ie,n=2,digits=5)                                                   #14
+```
+To see the expression that will be sent to the WFS server the argument `httrverbose = T` can be added. This will give some lines of information about the request. Only the first two lines are shown here:
+```{r intro_example_2a,eval=F}
+
+wfs_ie    <-  WFS_getfeature(typename,cql_filter=cql_spec,                   
+                             propertyname=fields,srsName='EPSG:4326',
+                             httrverbose = T) 
+```
+```{r intro_example_2b,echo=F}
+x = HOQCutil::capture.output.both(
+              WFS_getfeature(typename,cql_filter=cql_spec,                   
+                             propertyname=fields,srsName='EPSG:4326',
+                             httrverbose = T)  )
+x = purrr::map_chr(x[1:2],URLdecode) 
+HOQCutil::cap.out(cat(x)) 
+```
+[[back to contents]](#TOC)
+ 
 ### Workflow {#workflow}
 
 A typical workflow looks like this :

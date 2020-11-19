@@ -8,6 +8,7 @@
 #' @param url URL of the WFS service. See [WFS_get_url()] for the default
 #' @param version software version for WFS service request. See [WFS_get_version()] for the default
 #' @param debug Logical indicating the httr response is to be returned
+#' @param to_sf Logical indicating if a `json` object should be converted to an `sf` object
 #' @param sfverbose Logical indicating if [sf::read_sf()] messages will be displayed
 #' @param httrverbose Logical vector of up to four entries to be used in [httr::verbose()]
 #' @return a `sf` object with the requested information (the 'id' variable and the geometry will always be included)
@@ -34,6 +35,7 @@ WFS_getfeature <- function(typename, ...,
          url=WFS_get_url(),
          version=WFS_get_version(),
          debug=F,
+         to_sf=T,
          sfverbose=F,
          httrverbose=rep(F,4)){
     cv <- check_version(version)
@@ -45,14 +47,10 @@ WFS_getfeature <- function(typename, ...,
     url       <- httr::parse_url(url)
     url$query <- list(
       service = "WFS"
-      ,
-      version    = version
-      ,
-      request    = "GetFeature"
-      ,
-      typename   = typename
-      ,
-      outputFormat = "application/json"
+      , version    = version
+      , request    = "GetFeature"
+      , typename   = typename
+      , outputFormat = "application/json"
     )
     url$query = append(url$query, list(...))
     url$query <- WFS_util_keep_unique(url$query, keep_first = F)
@@ -63,7 +61,7 @@ WFS_getfeature <- function(typename, ...,
       res <- httr_GET_request (
         request,
         debug = debug,
-        to_sf = T,
+        to_sf = to_sf,
         sfverbose = sfverbose,
         httrverbose = httrverbose
       )
@@ -73,7 +71,7 @@ WFS_getfeature <- function(typename, ...,
         base_url,
         request,
         debug = debug,
-        to_sf = T,
+        to_sf = to_sf,
         sfverbose = sfverbose,
         httrverbose = httrverbose
       )

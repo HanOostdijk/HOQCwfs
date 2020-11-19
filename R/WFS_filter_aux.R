@@ -91,13 +91,13 @@ propeq_xml <-
     if (!(version %in% c('1.1.0', '2.0.0')))
       return("only version '1.1.0' and '2.0.0' are allowed")
     if (version == '1.1.0') {
-      fg1 = fg("PropertyIsEqualTo"
-               , bg('PropertyName', propname)
-               , bg('Literal', propvalue))
+      fg1 = fg("ogc:PropertyIsEqualTo"
+               , bg('ogc:PropertyName', propname)
+               , bg('ogc:Literal', propvalue))
     } else if (version == '2.0.0') {
-      fg1 = fg("PropertyIsEqualTo"
-               , bg('ValueReference', propname)
-               , bg('Literal', propvalue))
+      fg1 = fg("fes:PropertyIsEqualTo"
+               , bg('fes:ValueReference', propname)
+               , bg('fes:Literal', propvalue))
     }
     return(fg1)
   }
