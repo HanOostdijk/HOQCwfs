@@ -19,16 +19,17 @@ WFS_getcapabilities_POST(
 
 \item{debug}{Logical indicating the httr response is to be returned}
 
-\item{out_path}{(optional) path where the xml result is to be saved}
+\item{httrverbose}{Logical indicating full request and httr response code will be displayed}
 
-\item{verbose}{Logical indicating full request and httr response code will be displayed}
+\item{out_path}{(optional) path where the xml result is to be saved}
 }
 \value{
 xml document with the \code{GetCapabilities} information for this WFS service
 or character string 'UNEXPECTED ERROR' when an error was encountered
 }
 \description{
-Retrieves the GetCapabilities document
+Retrieve the GetCapabilities document with request version \code{version} for WFS service \code{url}.
+This function uses the \code{\link[httr:POST]{httr::POST()}} interface.
 }
 \examples{
 \dontrun{

@@ -2,6 +2,7 @@
 #' GetCapabilities for the WFS service
 #'
 #' Retrieve the GetCapabilities document with request version `version` for WFS service `url`
+#' This function uses the [httr::GET()] interface.
 #' @param url URL of the WFS service. See [WFS_get_url()] for the default
 #' @param version software version for WFS service request. See [WFS_get_version()] for the default
 #' @param debug Logical indicating the httr response is to be returned
@@ -58,10 +59,13 @@ handle_cap_output <- function(xml_doc,debug,out_path) {
 
 #' Retrieves the GetCapabilities document
 #'
+#' Retrieve the GetCapabilities document with request version `version` for WFS service `url`.
+#' This function uses the [httr::POST()] interface.
+#'
 #' @param url Character with base url for WFS service
 #' @param version  software version for WFS service request. See [WFS_get_version()] for the default
 #' @param debug Logical indicating the httr response is to be returned
-#' @param verbose Logical indicating full request and httr response code will be displayed
+#' @param httrverbose Logical indicating full request and httr response code will be displayed
 #' @param out_path (optional) path where the xml result is to be saved
 #' @return xml document with the `GetCapabilities` information for this WFS service
 #' or character string 'UNEXPECTED ERROR' when an error was encountered

@@ -54,15 +54,6 @@ test_that("WFS_getfeature: set 1", {
               "'arg' should be one of \"GET\", \"POST\"")
               #"'arg' should be one of “GET”, “POST”")
 
-  typename <- 'topp:gidw_groenbomen'
-  wfs4a      <- WFS_getfeature(typename,url=WFS_get_url(),
-                   httrType="POST",version=version2,
-                   startindex=3,maxfeatures=5)
-  expect_equal(wfs4a,paste0("java.lang.RuntimeException: java.io.IOException: ",
-               "Schema &apos;brandkranen_asv_amr&apos; does not exist.\n",
-               "java.io.IOException: Schema &apos;brandkranen_asv_amr&apos; ",
-               "does not exist.\nSchema &apos;brandkranen_asv_amr&apos; does not exist."))
-
 })
 
 test_that("WFS_getfeature set2", {
@@ -256,20 +247,43 @@ test_that("WFS_getfeature set6", {
   eq_rep1 <- purrr::map_lgl(rep1,
                               ~identical(names(.),"FeatureCollection"))
   expect_true(all(eq_rep1))
+
   # first test results without attributes and geometry
-  rep1na  <- purrr::map(rep1, function(x) {
-    if (is.null(x$FeatureCollection$boundedBy)) {
-      purrr::pluck(x, 1, 1, 1, 42) <- NULL
-    } else {
-      purrr::pluck(x, 1, 2, 1, 42)  <- NULL
-      purrr::pluck(x,1,1) <- NULL
+
+  rep1n0  <- purrr::map(rep1, function(x) {
+    n <- names(purrr::pluck(x, 1,))
+    paste0(n, collapse = '_')
+  })
+  rep1n0 <- unlist(rep1n0)
+  comb0  <- cbind(comb[gml1, ], str = rep1n0)
+  #  gml2    fields boundedBy and featureMember
+  #  gml3.1  fields featureMembers
+  #  gml3.2  fields member
+
+  rep1n1  <- purrr::map(rep1, function(x) {
+    if (!is.null(x$FeatureCollection$boundedBy)) {
+      purrr::pluck(x, 1, 1) <- NULL # remove boundedBy element
     }
-    n <- names(purrr::pluck(x, 1, 1, 1))
-    attributes(purrr::pluck(x, 1, 1, 1)) <- NULL # remove fid (gml ?) or id (gml/3.2 ?)attribute
-    names(purrr::pluck(x, 1, 1, 1)) <- n
-    attributes(x$FeatureCollection) <- NULL # remove xlmns attributes and names (member /featuremember)
+    attributes(purrr::pluck(x, 1, 1, 1))[2]
+  })
+  n     <- names(unlist(rep1n1) )
+  comb0 <- cbind(comb[gml1, ], n=n)
+  #  gml2    attribute of this typename instance: fid
+  #  gml3.1  attribute of this typename instance: id
+  #  gml3.2  attribute of this typename instance: id
+
+   rep1na  <- purrr::map(rep1, function(x) {
+    if (!is.null(x$FeatureCollection$boundedBy)) {
+      purrr::pluck(x,1,1) <- NULL # remove boundedBy element
+    }
+    purrr::pluck(x, 1, 1, 1, 42)  <- NULL # remove geom part
+    n <- names(purrr::pluck(x, 1, 1, 1))  # save names
+    attributes(purrr::pluck(x, 1, 1, 1)) <- NULL # remove fid (gml2) or id (gml3) attribute
+    names(purrr::pluck(x, 1, 1, 1)) <- n  # reload names
+    attributes(x$FeatureCollection) <- NULL # remove xlmns attributes and names member/featureMember/featureMember
     x
   })
+
   eq_rep1na <- purrr::map_lgl(rep1na, ~identical(.,rep1na[[1]]))
   expect_true(all(eq_rep1na))
 

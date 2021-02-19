@@ -55,10 +55,10 @@ Character vector with the created filter or xml fragment. However the \code{conv
 }
 \description{
 \itemize{
-\item The function \code{build_filter} creates a filter for the indication version by inserting the appropriate 'xmlns' urls
-in the Filter tag and inserting the XML elements from the \code{...} argument i.e. all arguments except \code{version}.
-While evaluating these elements the version is temporarily set to the argument \code{version} of \code{build_filter} unless explicitly
-overwritten.
+\item The function \code{build_filter} creates a filter for the indicated version by inserting the appropriate 'xmlns' urls
+in the Filter tag and inserting the XML elements from the \code{...} argument i.e. all arguments except \code{version} and \code{sep}.
+While evaluating these elements the version and separator are temporarily set to the arguments \code{version} and \code{sep} of
+\code{build_filter} unless explicitly overwritten.
 \item The function \code{propeq_xml} creates a \code{PropertyIsEqualTo} XML clause
 \item The function \code{propertyname_xml} creates a \code{PropertyName} or \code{ValueReference} clause
 \item The function \code{bbox_xml} creates a \code{BBOX} XML clause
@@ -81,7 +81,8 @@ f2 <- build_filter(version='2.0.0',
        , bbox_xml("geometrie","EPSG:4326",bbox_4326)
      )
   )
+pn_construct <- propertyname_xml('han','2.0.0',nopref =F)
+bbox_28992 <- c(119103, 480726, 119160, 481078)
+bbox_4326  <- convert_bbox(bbox_28992,"EPSG:28992","EPSG:4326")
 points_4326 <- convert_points(bbox_28992,"EPSG:28992","EPSG:4326")
-
-
 }

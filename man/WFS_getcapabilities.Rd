@@ -29,6 +29,7 @@ or character string 'UNEXPECTED ERROR' when an error was encountered
 }
 \description{
 Retrieve the GetCapabilities document with request version \code{version} for WFS service \code{url}
+This function uses the \code{\link[httr:GET]{httr::GET()}} interface.
 }
 \examples{
 \dontrun{

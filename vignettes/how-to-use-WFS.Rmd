@@ -30,18 +30,18 @@ In this vignette we use a WFS data source that contains information about the tr
 We will start with an example that retrieves trees of a certain species in a certain [bounding box](https://en.wikipedia.org/wiki/Minimum_bounding_box#Axis-aligned_minimum_bounding_box).  
 To do this we use the [GetFeature](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getfeature) operation of WFS that is called by the package function `WFS_getfeature`. Assuming we did not do a misspecification the result will be a [simple features]() (`sf`) object. An `sf` object (managed by the R package [sf](https://cran.r-project.org/package=sf)) is a `data.frame` with spatial attributes. Instead of reading the whole data set and doing a filtering on the resulting `data.frame` we can add the filter to the `GetFeature` operation and retrieve only the part that we need. For large files this is obviously more efficient.  
 
-From the contents you can deduce that we introduce the package with a typical use case for the `WFS_getfeature` function ([GetFeature](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getfeature) operation). After that, we show how to find out what can be done with the WFS resource by using the `WFS_getcapabilities` ([GetCapabilities](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getcapabilities) operation) function to see which 'sub datasets' (`featuretypes`) can be use and with the `WFS_describetype` ([DescribeFeatureType](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#describefeaturetype) operation) to see which fields a `featuretype` contains.  
+From the contents you can deduce that we introduce the package with a typical use case for the `WFS_getfeature` function ([GetFeature](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getfeature) operation). After that, we show how to find out what can be done with the WFS resource by using the `WFS_getcapabilities` ([GetCapabilities](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getcapabilities) operation) function to see which 'sub datasets' (`featuretypes`) can be used and with the `WFS_describetype` ([DescribeFeatureType](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#describefeaturetype) operation) to see which fields a `featuretype` contains.  
 After that we gradually introduce the possibilities to fine-tune the `WFS_getfeature` results.
 
 ### Introductory example {#intro-example}
 In this first example we combine a text filter with a spatial filter: we want to retrieve some attributes of all trees of the species `Alnus glutinosa 'Laciniata'` in a certain area. So we need the call to `WFS_getfeature` that is done in the lines `#11` and `#12`. I will start by mentioning the arguments that are not specified there:  
 
-- `url` is not specified and therefore its default is used that can be set by `WFS_set_url` and that standard is set to `r WFS_get_url()`   
-- `version` is not specified and therefore its default is used that can be set by `WFS_set_version` and that standard is set to `r WFS_get_version()`  
+- `url` is not specified and therefore its default is used that can be set by `WFS_set_url` and that initially is set to `r WFS_get_url()`   
+- `version` is not specified and therefore its default is used that can be set by `WFS_set_version` and that initially is set to `r WFS_get_version()`  
 - `httrType` is not specified and therefore its default `GET` is used
 - `typename` in `#11` (and `#3`) indicate the `featuretype` we are interested in. See [Look at the various features of the WFS resource](#look-at-features) section to find out which are available
 - `cql_filter` in `#11` (and `#10`) is the actual filter. See the  [Common Query Language (CQL) Tutorial](https://docs.geoserver.org/stable/en/user/tutorials/cql/cql_tutorial.html) for some general information.
-Apart from `cql_filter=` we can also have `filter=` (see section **TODO**) that expects a filter in terms of `xml` expressions. However hat is not used here.Here the query consists of two parts connected with the logical operator `and` : 
+Apart from `cql_filter=` we could also have used `filter=` (see section **TODO**) that expects a filter in terms of `xml` expressions. Here the query consists of two parts connected with the logical operator `and` : 
   - the text filter part in lines `#5` and `#6` that indicates that the field `boom_omschrijf` should have the value `Alnus glutinosa 'Laciniata'` . Note the double quotes around `Laciniata` ! The output of line `#6` shows you how the text filter should be coded
   - the spatial filter is defined in lines `#7`, `#8` and `#9` : the first line defines the lower-left and upper-right point of the area we are interested in (in coordinates `WGS84` or alternatively named `EPSG:4326`) and the second line and last line formats this in CQL terms. The output of line `#9` shows you how this spatial filter should be coded.
 - `propertyname` in line `#11` (and `#4`) indicate which fields will be returned in the `sf` object. Beside the two mentioned the `id` and `geometry` fields are also returned.
@@ -88,7 +88,7 @@ A typical workflow looks like this :
 #### Initialize {#initialize}
 Load the package and indicate which WFS resource you want to access and the version that you want to use for the requests and their answers.
 In this way you can avoid specifying this in the separate function calls.  
-ALso specify the separator that by default will be used in generated XML fragments.
+Also specify the separator that by default will be used in generated XML fragments.
 
 ```{r initialize1}
 library(HOQCwfs)
@@ -100,7 +100,7 @@ WFS_set_sep()      # default '\n' will be used
 #### Look at the possibilities the WFS resource has to offer {#look-at-possibilities}
 Retrieve the GetCapabilities document that describes the various features of the WFS resource and the actions that can be done. Because I have only read-access to WFS resources I am only interested in the query actions. An 'impression' of the rather extensive GetCapabilities xml document is given below.
 ```{r getcapabilities1}
-xmlcap <- WFS_getcapabilities()  
+xmlcap <- WFS_getcapabilities() # with the defaults for version and url 
 class(xmlcap)
 ```
 ```{r getcapabilities2,echo=F}
@@ -129,22 +129,20 @@ When there are many features (`r dim(ft1)[1]` in this case) and we are just inte
 class(ft2)
 dim(ft2)
 ft2$layer
+
 str(ft2[3,]) # show only featuretype 'topp:gidw_groenbomen' 
 ```
+Note that per featuretype the default Coordinate Reference System is indicated and coordinates of its bounding box. Here these coordinates are denoted **not** in this default CRS but in terms of `WGS 84` (the 'standard' CRS in degrees). 
 ```{r describefeaturetype1,echo=F}
 bomen_fields_1_3<- WFS_describefeaturetype(ft2$layer[c(1,3)])
 ```
+
 [[back to contents]](#TOC)
 
 #### Look at the data fields of featuretypes {#look-at-data-fields}
 For this we use the function `WFS_describefeaturetype` that executes the WFS `DescribeFeatureType` request. 
-As an example lets us look at the first and third featuretype in ft2 (`r glue::glue_collapse(glue::backtick(ft2$layer[c(1,3)]),last=" and ")`). Here we only show the first `5` rows of the result tibble of `r dim(bomen_fields_1_3)[1]` rows.
-```{r ref.label='describefeaturetype1',eval=F}
-```
-```{r describefeaturetype2}
-head(bomen_fields_1_3,5)
-```
-Because we later will use the fields of `topp:gidw_groenbomen` we will show all fields for this featuretype. Because we now request only one featuretype we can save the result of `DescribeFeatureType` in an xml file. Then we have the standard output:
+
+Because we later will use the fields of `topp:gidw_groenbomen` we will show all fields for this featuretype. Because we request only one featuretype we can save the result of `DescribeFeatureType` in an xml file. Then we have the standard output:
 ```{r describefeaturetype3}
 WFS_describefeaturetype("topp:gidw_groenbomen",out_path = 'desc.xml')
 ```
@@ -167,10 +165,11 @@ Now that we know the metadata of our resource we can actually retrieve the attri
 - [retrieve a subset](#retrieve-subset) of one of the above: add `maxfeatures=` or `count=` optionally in combination with `startindex=`
 - [retrieve all features in a bounding box](#retrieve_boundingbox)
 - [retrieve features in a bounding box with additional filtering](#retrieve_boundingbox-cqlfilter)
+- sort the features according to a sort key **TODO**
 
 If we are only interested in the [number of features](#number-of-features) that would be returned we can add `resultType=hits` to any of the above. This only returns this number without any other data.
 
-Examples:
+In the following sections we will give some examples.
 
 [[back to contents]](#TOC) 
 

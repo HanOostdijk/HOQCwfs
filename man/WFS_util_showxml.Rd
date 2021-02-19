@@ -22,8 +22,6 @@ WFS_util_showxml(
 \item{screenwidth}{Numeric scalar scalar indicating at which point the print output will be wrapped. This argument is passed to \code{\link[HOQCutil:cap.out]{HOQCutil::cap.out()}} as its 'with' argument}
 
 \item{max_n=20}{Numeric scalar passed to the xml2 print function indicating how many  xml lines will be printed}
-
-\item{verbose}{Logical indicating full request and httr response code will be displayed}
 }
 \value{
 NULL (invisible)

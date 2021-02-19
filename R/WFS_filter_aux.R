@@ -1,10 +1,10 @@
 
 #' Auxiliary functions to create filters
 #'
-#' - The function `build_filter` creates a filter for the indication version by inserting the appropriate 'xmlns' urls
-#' in the Filter tag and inserting the XML elements from the `...` argument i.e. all arguments except `version`.
-#' While evaluating these elements the version is temporarily set to the argument `version` of `build_filter` unless explicitly
-#' overwritten.
+#' - The function `build_filter` creates a filter for the indicated version by inserting the appropriate 'xmlns' urls
+#' in the Filter tag and inserting the XML elements from the `...` argument i.e. all arguments except `version` and `sep`.
+#' While evaluating these elements the version and separator are temporarily set to the arguments `version` and `sep` of
+#'  `build_filter` unless explicitly overwritten.
 #' - The function `propeq_xml` creates a `PropertyIsEqualTo` XML clause
 #' - The function `propertyname_xml` creates a `PropertyName` or `ValueReference` clause
 #' - The function `bbox_xml` creates a `BBOX` XML clause
@@ -43,10 +43,10 @@
 #'        , bbox_xml("geometrie","EPSG:4326",bbox_4326)
 #'      )
 #'   )
+#' pn_construct <- propertyname_xml('han','2.0.0',nopref =F)
+#' bbox_28992 <- c(119103, 480726, 119160, 481078)
+#' bbox_4326  <- convert_bbox(bbox_28992,"EPSG:28992","EPSG:4326")
 #' points_4326 <- convert_points(bbox_28992,"EPSG:28992","EPSG:4326")
-#'
-#'
-
 
 build_filter <- function (..., version=WFS_get_version(),sep=WFS_get_sep()) {
   if (! (version %in% c('1.1.0','2.0.0') ) )

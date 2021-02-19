@@ -7,7 +7,6 @@
 #' @param max_n=20 Numeric scalar passed to the xml2 print function indicating how many  xml lines will be printed
 #' @param lines Numerical vector indicating which lines of the print output will actually be shown. `NULL` indicates all. This argument is passed to [HOQCutil::cap.out()]
 #' @param screenwidth Numeric scalar scalar indicating at which point the print output will be wrapped. This argument is passed to [HOQCutil::cap.out()] as its 'with' argument
-#' @param verbose Logical indicating full request and httr response code will be displayed
 #' @return NULL (invisible)
 #' @export
 #' @examples
