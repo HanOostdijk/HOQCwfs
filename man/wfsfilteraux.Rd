@@ -29,7 +29,7 @@ convert_points(coords, crs_in, crs_out, out_matrix = T, keep_names = T)
 
 \item{sep}{NULL for the default separator (set by \code{\link[=WFS_set_sep]{WFS_set_sep()}}) or required separator otherwise}
 
-\item{propname}{Character string with the \code{PropertyName} (1.1.0) or \code{ValueReference} (2.0.0)#'}
+\item{propname}{Character string with the \code{PropertyName} (1.1.0) or \code{ValueReference} (2.0.0)}
 
 \item{nopref}{Logical scalar indicating the 'ogc:' pref is not to be used in \code{propertyname_xml}}
 

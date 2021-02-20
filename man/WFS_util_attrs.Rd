@@ -11,8 +11,8 @@ WFS_util_attrs(cap, skip = c("none", "known", "version"), as.text = T)
 
 \item{skip}{Character string which of the attributes will be removed. See Details}
 
-\item{as.text}{Logical scalar. If \code{TRUE} indicates that the result will be a character strim (ready for inclusion in a XML request).
-Otherwise the result is a named list.}
+\item{as.text}{Logical scalar. If \code{TRUE} indicates that the result will be a character string
+(ready for inclusion in a XML request). Otherwise the result is a named list.}
 }
 \value{
 Character string or list depending on the argument \code{as.text}

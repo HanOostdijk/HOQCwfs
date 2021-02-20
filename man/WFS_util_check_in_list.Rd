@@ -31,9 +31,18 @@ Logical value indicating if the \code{name} entry contains the value \code{value
 }
 \description{
 With the default parameters the function is checking without caring for lower and upper caps
-if a certain entry contains a certain value and when a name occurs more than once
-the first occurrence will be used. By specifying the 'ignore_case' arguments to \code{FALSE} the user
+if a list has an entry with a certain name and value. When a name occurs more than once
+the first (if \code{keep.first==TRUE}) or last (otherwise) occurrence is examined.
+By specifying the \code{ignore_case} arguments to \code{FALSE} the user
 can indicate that the difference in lower and upper caps is important when comparing 'names'
 (in case of \code{name_ignore_case} ) and/or  'values' (in case of \code{value_ignore_case} ).
-By specifying \code{keep.first=FALSE} the last entry will be used when more than one is selected.
+}
+\examples{
+WFS_util_check_in_list(
+    mylist = list(a='x',b='y',b='Y'),
+    name = 'B',
+    value = 'Y',
+    value_ignore_case = F
+  )
+# [1] FALSE  # first entry B found with value y (unequal to Y)
 }

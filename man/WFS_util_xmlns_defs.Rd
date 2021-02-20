@@ -9,7 +9,7 @@ WFS_util_xmlns_defs(version = WFS_get_version(), as.txt = T)
 \arguments{
 \item{version}{software version for WFS service request. See \code{\link[=WFS_get_version]{WFS_get_version()}} for the default}
 
-\item{as.txt}{Logical indicating is character string is to be returned or a list}
+\item{as.txt}{Logical indicating if character string is to be returned (T) or a list (F)}
 }
 \value{
 character string or list with the xmlns definitions

@@ -2,7 +2,7 @@
 % Please edit documentation in R/WFS_utils.R
 \name{WFS_util_keep_unique}
 \alias{WFS_util_keep_unique}
-\title{keep first or last entry of list entries with duplicated names}
+\title{Keep first or last entry of list entries with duplicated names}
 \usage{
 WFS_util_keep_unique(mylist, keep_first = T, ignore.case = T)
 }
@@ -17,5 +17,10 @@ WFS_util_keep_unique(mylist, keep_first = T, ignore.case = T)
 A copy of \code{mylist} with duplicate names removed (apart from the first when \code{keep_first=TRUE} or last otherwise )
 }
 \description{
-keep first or last entry of list entries with duplicated names
+Keep first or last entry of list entries with duplicated names
+}
+\examples{
+L <- list( a = 1, A = 2, aA = 3, Aa = 4)
+WFS_util_keep_unique(L,keep_first = T, ignore.case=T)
+# list(a = 1, aA = 3)
 }

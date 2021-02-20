@@ -17,7 +17,13 @@ WFS_util_replace_names(mylist, onames, nnames)
 A copy of \code{mylist} with names in \code{onames} replaced by the corresponding ones in \code{nnames}
 }
 \description{
-Replace names in a list
+This function uses two character vectors to replace names in a named list. The first character vector
+contains the names (case insensitive) that will be replaced and the second character vector contains
+their corresponding replacements. It is possible that all, none or some names will be replaced.
+}
+\details{
+In this package the function is used to translate argument names for the case that these names are different
+in the WFS versions.
 }
 \examples{
 \dontrun{
@@ -25,4 +31,7 @@ WFS_util_replace_names(mylist,
   c('maxFeatures', 'typeName'),
   c('count',       'typeNames') )
 }
+}
+\seealso{
+\code{\link[=WFS_util_unify_names]{WFS_util_unify_names()}} , \code{\link[=WFS_util_v12_names]{WFS_util_v12_names()}}
 }

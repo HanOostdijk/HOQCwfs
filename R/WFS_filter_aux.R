@@ -15,7 +15,7 @@
 #' @param ... XML elements to be added to filter
 #' @param version Character string with the WFS request version
 #' @param sep NULL for the default separator (set by [WFS_set_sep()]) or required separator otherwise
-#' @param propname Character string with the `PropertyName` (1.1.0) or `ValueReference` (2.0.0)#'
+#' @param propname Character string with the `PropertyName` (1.1.0) or `ValueReference` (2.0.0)
 #' @param nopref Logical scalar indicating the 'ogc:' pref is not to be used in `propertyname_xml`
 #' @param gemprop Character string with the name of the geometric field
 #' @param crs_in Character string with the name of the input crs (e.g. `"EPSG:4326"` )

@@ -40,7 +40,7 @@ suppressWarnings({
   x=WFS_util_parameter_values(cap1)
   })
 expect_true(is.null(x))
-xx <- "?? is not a valid operation\nchoose one from `GetCapabilities`, `DescribeFeatureType`, `GetFeature`, `GetGmlObject`, `LockFeature`, `GetFeatureWithLock` and `Transaction`"
+xx <- "?? is not a valid operation\nchoose one from `GetCapabilities`, `DescribeFeatureType`, `GetFeature`, `GetGmlObject`, `LockFeature`, `GetFeatureWithLock` or `Transaction`"
 expect_warning(
   WFS_util_parameter_values(cap1),
   fixed=T,regexp=xx )
@@ -50,7 +50,7 @@ suppressWarnings({
   x=WFS_util_parameter_values(cap2)
   })
 expect_true(is.null(x))
-xx <- "?? is not a valid operation\nchoose one from `GetCapabilities`, `DescribeFeatureType`, `GetFeature`, `GetPropertyValue`, `ListStoredQueries`, `DescribeStoredQueries`, `CreateStoredQuery`, `DropStoredQuery`, `LockFeature`, `GetFeatureWithLock` and `Transaction`"
+xx <- "?? is not a valid operation\nchoose one from `GetCapabilities`, `DescribeFeatureType`, `GetFeature`, `GetPropertyValue`, `ListStoredQueries`, `DescribeStoredQueries`, `CreateStoredQuery`, `DropStoredQuery`, `LockFeature`, `GetFeatureWithLock` or `Transaction`"
 expect_warning(
   WFS_util_parameter_values(cap2),
   fixed=T,regexp=xx )
@@ -60,7 +60,7 @@ suppressWarnings({
   x=WFS_util_parameter_values(cap1,operation='GetCapabilities')
   })
 expect_true(is.null(x))
-xx <- "?? is not a valid parameter\nchoose `AcceptVersions` and `AcceptFormats`"
+xx <- "?? is not a valid parameter\nchoose one from `AcceptVersions` or `AcceptFormats`"
 expect_warning(
   WFS_util_parameter_values(cap1,operation='GetCapabilities'),
   fixed=T,regexp=xx )
@@ -70,7 +70,7 @@ suppressWarnings({
   x=WFS_util_parameter_values(cap2,operation='GetCapabilities')
   })
 expect_true(is.null(x))
-xx <- "?? is not a valid parameter\nchoose `AcceptVersions` and `AcceptFormats`"
+xx <- "?? is not a valid parameter\nchoose one from `AcceptVersions` or `AcceptFormats`"
 expect_warning(
   WFS_util_parameter_values(cap2,operation='GetCapabilities'),
   fixed=T,regexp=xx )
@@ -128,7 +128,7 @@ expect_false( 'xmlns:wfs' %in% y3 )
 
 test_that("WFS_util_xmlns_defs", {
 
-x     <- WFS_util_xmlns_defs()
+x     <- WFS_util_xmlns_defs(version='1.1.0',as.txt=T)
 expect_true( inherits(x,"character") )
 expect_true( length(x) == 1 )
 expect_named( x, NULL )
@@ -136,7 +136,7 @@ expect_false( grepl('version="1.1.0"',x,fixed=T) )
 expect_true( grepl('xmlns:ogc="http://www.opengis.net/ogc"',x,fixed=T) )
 expect_false( grepl('xmlns:fes="http://www.opengis.net/fes/2.0"',x,fixed=T) )
 
-x     <- WFS_util_xmlns_defs(version='2.0.0')
+x     <- WFS_util_xmlns_defs(version='2.0.0',as.txt=T)
 expect_true( inherits(x,"character") )
 expect_true( length(x) == 1 )
 expect_named( x, NULL )
@@ -144,7 +144,7 @@ expect_false( grepl('version="2.0.0"',x,fixed=T) )
 expect_false( grepl('xmlns:ogc="http://www.opengis.net/ogc"',x,fixed=T) )
 expect_true( grepl('xmlns:fes="http://www.opengis.net/fes/2.0"',x,fixed=T) )
 
-x     <- WFS_util_xmlns_defs(as.txt=F)
+x     <- WFS_util_xmlns_defs('version="1.1.0"',as.txt=F)
 expect_true( inherits(x,"character") )
 expect_true( length(x) > 1 )
 expect_named( x, NULL )

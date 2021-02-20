@@ -11,17 +11,23 @@ WFS_util_parameter_values(cap, operation = "??", parameter = "??")
 
 \item{operation}{Character string indicating one of the WFS operations}
 
-\item{parameter}{Character string indicating one of the parameters of the operation}
+\item{parameter}{Character string indicating one of the parameters of that operation}
 }
 \value{
 Character vector with the allowed values for the parameter
 }
 \description{
-Retrieves the allowed values for the parameters of WFS operations
+When a valid operation and parameter are specified the values that are allowed are returned.
+When a parameter is not allowed for that operation or is not specified a warning is shown with
+the parameters that are allowed for that operation.
+When an operation is not allowed or not specified a warning is shown with the available operations.
 }
 \examples{
 \dontrun{
-WFS_util_parameter_values(cap,operation='GetFeature',parameter='outputFormat')
-WFS_util_parameter_values(cap,operation='DescribeFeatureType',parameter='outputFormat')
+base_url  <- "https://geodata.nationaalgeoregister.nl/wijkenbuurten2019/wfs"
+cap1 = WFS_getcapabilities_POST(base_url,'1.1.0')
+WFS_util_parameter_values(cap1,operation='GetFeature')
+WFS_util_parameter_values(cap1,operation='GetFeature',parameter='outputFormat')
+WFS_util_parameter_values(cap1,operation='DescribeFeatureType',parameter='outputFormat')
 }
 }

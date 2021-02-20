@@ -2,7 +2,7 @@
 % Please edit documentation in R/WFS_utils.R
 \name{WFS_util_unify_names}
 \alias{WFS_util_unify_names}
-\title{replace argument names by their uniform counterparts}
+\title{Replace argument names by their uniform counterparts}
 \usage{
 WFS_util_unify_names(mylist, vnames)
 }
@@ -20,5 +20,20 @@ WFS_util_unify_names(mylist, vnames)
 A copy of \code{mylist} with names in both sets replaced by the corresponding uniform one
 }
 \description{
-replace argument names by their uniform counterparts
+Argument names in WFS versions  \verb{1.1.0} and \verb{2.0.0} are not always the same (see \code{\link[=WFS_util_v12_names]{WFS_util_v12_names()}}) .
+To enable the use of both sets of names (independent of the version used) in queries these names are
+first translated to their uniform counterparts. Before constructing the actual query these uniform names
+will be translated again (by \code{\link[=WFS_util_replace_names]{WFS_util_replace_names()}} ) to their version dependent counterpart.
+In normal use the \code{vnames} argument will be the output of \code{\link[=WFS_util_v12_names]{WFS_util_v12_names()}}.
+The look-up of the names is done while ignoring case.
+}
+\examples{
+L <- list( a = 1, A = 2, aA = 3, Aa = 4,
+          b = 6, B = 7, bB = 8, Bb = 9)
+vnames <- list( c('X','Y'), c('a', 'aa'), c('b', 'bb'))
+WFS_util_unify_names(L,vnames)
+# list(X = 1, X = 2, Y = 3, Y = 4, X = 6, X = 7, Y = 8, Y = 9)
+}
+\seealso{
+\code{\link[=WFS_util_v12_names]{WFS_util_v12_names()}} , \code{\link[=WFS_util_replace_names]{WFS_util_replace_names()}}
 }

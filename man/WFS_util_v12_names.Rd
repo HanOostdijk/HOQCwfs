@@ -2,18 +2,26 @@
 % Please edit documentation in R/WFS_utils.R
 \name{WFS_util_v12_names}
 \alias{WFS_util_v12_names}
-\title{incompatible argument names in versions \verb{1.1.0} and \verb{2.0.0}}
+\title{Incompatible argument names in versions \verb{1.1.0} and \verb{2.0.0}}
 \usage{
 WFS_util_v12_names()
 }
 \value{
 A list of three character vectors:
 \itemize{
-\item uniform names of temporary use
+\item uniform names for temporary use
 \item corresponding version \verb{1.1.0} names
 \item corresponding version \verb{2.0.0} names
 }
 }
 \description{
-incompatible argument names in versions \verb{1.1.0} and \verb{2.0.0}
+Most query arguments are the same in the versions \verb{1.1.0} and \verb{2.0.0}.
+The function \code{WFS_util_v12_names} lists the argument names that are different in three versions: see \strong{Value}
+}
+\examples{
+WFS_util_v12_names()
+# list(v0 = c("maxF", "typeN"), v1 = c("maxFeatures", "typeName"), v2 = c("count", "typeNames"))
+}
+\seealso{
+\code{\link[=WFS_util_unify_names]{WFS_util_unify_names()}} , \code{\link[=WFS_util_replace_names]{WFS_util_replace_names()}}
 }
