@@ -99,12 +99,12 @@ WFS_set_sep(orgsep)
 
 f4a <- build_filter(version='1.1.0', propeq_xml('x',"y"),sep='')
 f4b <- paste0("<Filter xmlns:gml=\"http://www.opengis.net/gml\" xmlns:ogc=\"http://www.opengis.net/ogc\"",
-         "><ogc:PropertyIsEqualTo><PropertyName>x</ogc:PropertyName><ogc:Literal>y</ogc:Literal></ogc:PropertyIsEqualTo></Filter>")
+         "><ogc:PropertyIsEqualTo><ogc:PropertyName>x</ogc:PropertyName><ogc:Literal>y</ogc:Literal></ogc:PropertyIsEqualTo></Filter>")
 expect_equal(f4a,f4b)
 
 f4c <- build_filter(version='2.0.0', propeq_xml('x',"y"),sep='')
 f4d <- paste0( "<Filter xmlns:gml=\"http://www.opengis.net/gml/3.2\" xmlns:fes=\"http://www.opengis.net/fes/2.0\"",
-         "><fes:PropertyIsEqualTo><fes:ValueReference>x</fes:ValueReference><fes:Literal>y<fes:/Literal></fes:PropertyIsEqualTo></Filter>")
+         "><fes:PropertyIsEqualTo><fes:ValueReference>x</fes:ValueReference><fes:Literal>y</fes:Literal></fes:PropertyIsEqualTo></Filter>")
 expect_equal(f4c,f4d)
 })
 

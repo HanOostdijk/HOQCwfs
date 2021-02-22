@@ -1,3 +1,8 @@
+#' @name wfshttrrequest
+NULL
+#> NULL
+
+
 #' Retrieve information with a httr GET or POST request
 #'
 #' The `httr_GET_request` and `httr_POST_request` retrieve information from a webserver.\cr
@@ -19,6 +24,7 @@
 #'
 #' @param request Character string with url as needed for [httr::GET()] in case of the `httr_GET_request` and a character string with
 #' a [httr::POST()] body otherwise
+#' @param url Character string with the url of the WFS service
 #' @param debug Logical indicating if the httr response object is to be returned
 #' @param to_sf Logical indicating if a `json` object should be converted to an `sf` object
 #' @param sfverbose Logical indicating if [sf::read_sf()] messages will be displayed
@@ -50,15 +56,15 @@ httr_GET_request <- function (request,
            to_sf = F,
            sfverbose = F,
            httrverbose = rep(F, 4)) {
-  suppressWarnings(res <- try({
-    if (any(httrverbose == T)) {
-      res <- httr::GET(request,
-                       do.call(httr::verbose, as.list(httrverbose)))
-    } else {
-      res <- httr::GET(request)
-    }
-    # httr::GET(request)
-  }, silent = TRUE)
+  suppressWarnings(res <-
+    try({
+      if (any(httrverbose == T)) {
+        res <- httr::GET(request,
+                         do.call(httr::verbose, as.list(httrverbose)))
+      } else {
+        res <- httr::GET(request)
+      }
+    }, silent = TRUE)
   )
   handle_res(res,debug,to_sf,sfverbose)
 }

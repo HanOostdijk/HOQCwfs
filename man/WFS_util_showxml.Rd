@@ -15,19 +15,26 @@ WFS_util_showxml(
 \arguments{
 \item{myxml}{XML document, node_set or node}
 
-\item{width}{Numeric scalar passed to the xml2 print function indicating how many characters of the xml lines will be shown}
+\item{width}{Numeric scalar passed to the xml2 print function indicating how many characters of the xml lines
+will be shown}
 
-\item{lines}{Numerical vector indicating which lines of the print output will actually be shown. \code{NULL} indicates all. This argument is passed to \code{\link[HOQCutil:cap.out]{HOQCutil::cap.out()}}}
+\item{lines}{Numerical vector indicating which lines of the print output will actually be shown.
+\code{NULL} indicates all. This argument is passed to \code{\link[HOQCutil:cap.out]{HOQCutil::cap.out()}}}
 
-\item{screenwidth}{Numeric scalar scalar indicating at which point the print output will be wrapped. This argument is passed to \code{\link[HOQCutil:cap.out]{HOQCutil::cap.out()}} as its 'with' argument}
+\item{screenwidth}{Numeric scalar scalar indicating at which point the print output will be wrapped.
+This argument is passed to \code{\link[HOQCutil:cap.out]{HOQCutil::cap.out()}} as its 'width' argument}
 
-\item{max_n=20}{Numeric scalar passed to the xml2 print function indicating how many  xml lines will be printed}
+\item{max_n=20}{Numeric scalar passed to the xml2 print function indicating how many  xml lines
+will be printed}
 }
 \value{
 NULL (invisible)
 }
 \description{
-This is a cover function for the XML  \code{xml2:::print.xml_document}, \code{print.xml_nodeset} and \code{print.xml_node} print functions
+This is a cover function for the internal XML print functions \code{print.xml_document}, \code{print.xml_nodeset} and
+\code{print.xml_node}. These functions are called by the \code{\link[HOQCutil:cap.out]{HOQCutil::cap.out()}} that
+determines which lines will be printed and the width of the output lines. The function can be used to include
+(part of) an XML document in documentation (as is done in a vignette for this package).
 }
 \examples{
 \dontrun{

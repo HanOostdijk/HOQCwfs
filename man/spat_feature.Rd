@@ -2,7 +2,7 @@
 % Please edit documentation in R/WFS_filter_aux.R
 \name{spat_feature}
 \alias{spat_feature}
-\title{Creates the description in XML format of a spatial feature}
+\title{Creates the description of a spatial feature in XML format}
 \usage{
 spat_feature(
   sptype,
@@ -17,7 +17,7 @@ spat_feature(
 One of \code{envelope}, \code{point}, \code{linestring}, \code{polygon} or
 the multi version of the last three options. The argument is case insensitive}
 
-\item{crs_in}{Character string with the Coordinate Reference System}
+\item{crs_in}{Character string indicating the Coordinate Reference System}
 
 \item{coords}{A numeric vector of even length with the coordinates of the feature or a list (of lists) of those vectors.
 Instead of a vector also a two-column matrix can be specified.}
@@ -31,14 +31,22 @@ Character vector with the created xml fragment
 }
 \description{
 The coordinates have to be specified in the way done in the corresponding \code{sf} function:
-\code{\link[sf:st]{sf::st_point()}}, \code{\link[sf:st]{sf::st_linestring()}}, \code{\link[sf:st]{sf::st_polygon()}},
-\code{\link[sf:st]{sf::st_multipoint()}}, \code{\link[sf:st]{sf::st_multilinestring()}}, \code{\link[sf:st]{sf::st_multipolygon()}},
-or \code{\link[sf:st_bbox]{sf::st_bbox()}} (the latter for \code{envelope}).
-In places where the corresponding \code{sf} function requires a two-column matrix, this function also
-accepts even-length vectors. See Details.
+\itemize{
+\item \code{\link[sf:st]{sf::st_point()}}
+\item \code{\link[sf:st]{sf::st_linestring()}}
+\item \code{\link[sf:st]{sf::st_polygon()}}
+\item \code{\link[sf:st]{sf::st_multipoint()}}
+\item \code{\link[sf:st]{sf::st_multilinestring()}}
+\item \code{\link[sf:st]{sf::st_multipolygon()}},
+\item \code{\link[sf:st_bbox]{sf::st_bbox()}} (for \code{envelope})
+}
 }
 \details{
-Assuming that we always use a two_colum matrix (apart from the 'envelope' that needs a length four vector) we need the following coordinates structure:
+In places where the corresponding \code{sf} function requires a two-column matrix, this function also
+accepts even-length vectors. See Details.
+
+Assuming that we always use a two_colum matrix (apart from the 'envelope' that needs a length four vector)
+we need the following coordinates structure:
 \itemize{
 \item point : a one-row  matrix
 \item linestring : a n-row matrix with n > 1

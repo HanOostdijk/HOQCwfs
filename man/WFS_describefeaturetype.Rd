@@ -20,20 +20,24 @@ WFS_describefeaturetype(
 
 \item{version}{software version for WFS service request. See \code{\link[=WFS_get_version]{WFS_get_version()}} for the default}
 
-\item{debug}{Logical indicating the httr response is to be returned}
+\item{debug}{Logical indicating the httr response is to be returned.
+Only valid when typenames contains one featuretype}
 
-\item{httrverbose}{Logical indicating full request and httr response code will be displayed}
+\item{httrverbose}{Logical vector of up to four entries to be used in \code{\link[httr:verbose]{httr::verbose()}}.
+When this vector contains at least one TRUE debugging messages are displayed.
+Useful to find out what exactly was sent to and received from the webserver}
 
-\item{out_path}{(optional) path where the \code{FeatureType} info is to be saved in xml format. Only valid when \code{typenames} contains one featuretype}
+\item{out_path}{(optional) path where the \code{FeatureType} info is to be saved in xml format.
+Only valid when \code{typenames} contains one featuretype}
 }
 \value{
 a \code{tibble} with \code{typename} and \code{name} (the fieldnames)
 }
 \description{
-Retrieve and unpack the \code{DescribeFeatureType} document for one or more  \code{FeatureTypes} into a tibble
+Retrieve and unpack the \code{DescribeFeatureType} document for one or more \code{FeatureTypes} into a tibble.
 }
 \details{
-\code{typenames} is copied to the result tibble to distinguish the various \code{FeatureTypes} when more than one is specified
+\code{typename} is copied to the result tibble to distinguish the various \code{FeatureTypes} when more than one is specified
 }
 \examples{
 \dontrun{

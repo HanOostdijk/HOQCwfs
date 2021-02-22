@@ -1,3 +1,6 @@
+#' @name wfsfilteraux
+NULL
+#> NULL
 
 #' Auxiliary functions to create filters
 #'
@@ -6,12 +9,9 @@
 #' While evaluating these elements the version and separator are temporarily set to the arguments `version` and `sep` of
 #'  `build_filter` unless explicitly overwritten.
 #' - The function `propeq_xml` creates a `PropertyIsEqualTo` XML clause
-#' - The function `propertyname_xml` creates a `PropertyName` or `ValueReference` clause
+#' - The function `propertyname_xml` creates a `PropertyName` or `ValueReference` XML clause
 #' - The function `bbox_xml` creates a `BBOX` XML clause
-#' - The function `convert_bbox` convert a bbox from one CRS to another
-#' - The function `convert_points` convert a set of points (in vector or matrix form) from one CRS to another
 #'
-#' @param tag Character with tag that will be used as both start and end tag
 #' @param ... XML elements to be added to filter
 #' @param version Character string with the WFS request version
 #' @param sep NULL for the default separator (set by [WFS_set_sep()]) or required separator otherwise
@@ -19,13 +19,9 @@
 #' @param nopref Logical scalar indicating the 'ogc:' pref is not to be used in `propertyname_xml`
 #' @param gemprop Character string with the name of the geometric field
 #' @param crs_in Character string with the name of the input crs (e.g. `"EPSG:4326"` )
-#' @param crs_out Character string with the name of the output crs (e.g. `"EPSG:28992"` )
-#' @param coords Numeric vector with four elements indicating the bounding box (for `convert_bbox` ) or a numeric vector of even length
-#' or numeric matrix with two columns (for `convert_points` )
+#' @param coords Numeric vector with four elements indicating the bounding box
 #' @param propvalue Character string to filter with
-#' @param out_matrix Logical indicating that the output of  `convert_points` should be matrix
-#' @param keep_names Logical indicating that the output of `convert_points` keeps the column names when the input is a matrix
-#' @return Character vector with the created filter or xml fragment. However the `convert_bbox` returns a numeric vector and the  `convert_points` returns a numeric matrix with two columns
+#' @return Character vector with the created filter or xml fragment.
 #' @export
 #' @rdname wfsfilteraux
 #' @examples
@@ -105,7 +101,7 @@ propeq_xml <-
 #' @export
 #' @rdname wfsfilteraux
 
-bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version()) {
+bbox_xml <- function (gemprop, crs_in, coords, version = WFS_get_version()) {
   if (!(version %in% c('1.1.0', '2.0.0')))
     return("only version '1.1.0' and '2.0.0' are allowed")
   if (version == '1.1.0') {
@@ -114,11 +110,11 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
       , bg("PropertyName", gemprop)
       , fg("gml:Envelope"
         , fg('gml:coord'
-           , bg('gml:X', bbox_coords[1])
-           , bg('gml:Y', bbox_coords[2]))
+           , bg('gml:X', coords[1])
+           , bg('gml:Y', coords[2]))
         , fg('gml:coord'
-           , bg('gml:X', bbox_coords[3])
-           , bg('gml:Y', bbox_coords[4]))
+           , bg('gml:X', coords[3])
+           , bg('gml:Y', coords[4]))
         , ta = glue::glue('srsName = "{crs_in}"')
         )
     )
@@ -129,9 +125,9 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
       , bg("ValueReference", gemprop)
       , fg("gml:Envelope"
         , bg('gml:lowerCorner'
-           , glue::glue_collapse(bbox_coords[1:2], sep = ' '))
+           , glue::glue_collapse(coords[1:2], sep = ' '))
         , bg('gml:upperCorner'
-           , glue::glue_collapse(bbox_coords[3:4], sep = ' '))
+           , glue::glue_collapse(coords[3:4], sep = ' '))
         , ta = glue::glue('srsName = "{crs_in}"')
         )
     )
@@ -139,62 +135,23 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
   return(fg1)
 }
 
-#' @export
-#' @rdname wfsfilteraux
-
- convert_bbox <- function (coords,crs_in,crs_out) {
-   if (!is.matrix(coords)) {
-     coords = matrix(coords, ncol = 2, byrow = T)
-     }
-    mp_sfc <- sf::st_sfc(
-      sf::st_multipoint(coords),crs=crs_in)
-    sf::st_bbox(sf::st_transform(mp_sfc,crs=crs_out))
- }
-
-#' @export
-#' @rdname wfsfilteraux
- convert_points <- function (coords,
-                             crs_in,
-                             crs_out,
-                             out_matrix = T,
-                             keep_names = T) {
-   if (!is.matrix(coords)) {
-     was_vector <- T # apparently vector
-     coords <- matrix(coords, ncol = 2, byrow = T)
-   } else {
-     was_vector <- F
-     orgattr <- attributes(coords)
-   }
-   mp_sfc <- sf::st_sfc(sf::st_multipoint(coords), crs = crs_in)
-   mp_sfc <- sf::st_transform(mp_sfc, crs = crs_out)
-   coords <- sf::st_coordinates(mp_sfc)[, c('X', 'Y')]
-   if (was_vector) {
-     if (out_matrix == F)
-       return (as.vector(t(coords)))
-     else {
-       dimnames(coords) <- NULL
-       return(coords)
-     }
-   } else {
-     if (keep_names)
-       attributes(coords) <- orgattr
-     else
-       dimnames(coords) <- NULL
-   }
-   coords
- }
-
-#' Creates the description in XML format of a spatial feature
+#' Creates the description of a spatial feature in XML format
 #'
 #'
 #' The coordinates have to be specified in the way done in the corresponding `sf` function:
-#' [sf::st_point()], [sf::st_linestring()], [sf::st_polygon()],
-#' [sf::st_multipoint()], [sf::st_multilinestring()], [sf::st_multipolygon()],
-#' or [sf::st_bbox()] (the latter for `envelope`).
+#' - [sf::st_point()]
+#' - [sf::st_linestring()]
+#' - [sf::st_polygon()]
+#' - [sf::st_multipoint()]
+#' - [sf::st_multilinestring()]
+#' - [sf::st_multipolygon()],
+#' - [sf::st_bbox()] (for `envelope`)
+#'
 #' In places where the corresponding `sf` function requires a two-column matrix, this function also
 #' accepts even-length vectors. See Details.
 #'
-#' Assuming that we always use a two_colum matrix (apart from the 'envelope' that needs a length four vector) we need the following coordinates structure:
+#' Assuming that we always use a two_colum matrix (apart from the 'envelope' that needs a length four vector)
+#' we need the following coordinates structure:
 #'
 #' - point : a one-row  matrix
 #' - linestring : a n-row matrix with n > 1
@@ -209,7 +166,7 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
 #' @param sptype Character string with the type of spatial feature.
 #' One of `envelope`, `point`, `linestring`, `polygon` or
 #' the multi version of the last three options. The argument is case insensitive
-#' @param crs_in Character string with the Coordinate Reference System
+#' @param crs_in Character string indicating the Coordinate Reference System
 #' @param coords A numeric vector of even length with the coordinates of the feature or a list (of lists) of those vectors.
 #'  Instead of a vector also a two-column matrix can be specified.
 #' @param version Character string with the WFS request version
@@ -440,23 +397,12 @@ bbox_xml <- function (gemprop, crs_in, bbox_coords, version = WFS_get_version())
         , ta = glue::glue('{u}="{units}"',u=v('units')))
   else
     fg2 = ''
-  if (version == '1.1.0') {
-    fg1 = fg(
-      v(spat_fun)
-      , bg(v("PropertyName"), gemprop)
-      , feature
-      , fg2
-    )
-  }
-  else if (version == '2.0.0') {
-    fg1 = fg(
-      v(spat_fun)
-      , bg(v("ValueReference"), gemprop)
-      , feature
-      , fg2
-    )
-  }
+  fg1 = fg(
+    v(spat_fun)
+    , propertyname_xml(gemprop,version,nopref=F)
+    , feature
+    , fg2
+  )
   return(fg1)
 }
-
 

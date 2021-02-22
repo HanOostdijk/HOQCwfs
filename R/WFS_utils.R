@@ -1,12 +1,19 @@
 
 #' Show XML fragment on screen
 #'
-#' This is a cover function for the XML  `xml2:::print.xml_document`, `print.xml_nodeset` and `print.xml_node` print functions
+#' This is a cover function for the internal XML print functions `print.xml_document`, `print.xml_nodeset` and
+#' `print.xml_node`. These functions are called by the [HOQCutil::cap.out()] that
+#' determines which lines will be printed and the width of the output lines. The function can be used to include
+#' (part of) an XML document in documentation (as is done in a vignette for this package).
 #' @param myxml XML document, node_set or node
-#' @param width Numeric scalar passed to the xml2 print function indicating how many characters of the xml lines will be shown
-#' @param max_n=20 Numeric scalar passed to the xml2 print function indicating how many  xml lines will be printed
-#' @param lines Numerical vector indicating which lines of the print output will actually be shown. `NULL` indicates all. This argument is passed to [HOQCutil::cap.out()]
-#' @param screenwidth Numeric scalar scalar indicating at which point the print output will be wrapped. This argument is passed to [HOQCutil::cap.out()] as its 'with' argument
+#' @param width Numeric scalar passed to the xml2 print function indicating how many characters of the xml lines
+#' will be shown
+#' @param max_n=20 Numeric scalar passed to the xml2 print function indicating how many  xml lines
+#' will be printed
+#' @param lines Numerical vector indicating which lines of the print output will actually be shown.
+#'  `NULL` indicates all. This argument is passed to [HOQCutil::cap.out()]
+#' @param screenwidth Numeric scalar scalar indicating at which point the print output will be wrapped.
+#' This argument is passed to [HOQCutil::cap.out()] as its 'width' argument
 #' @return NULL (invisible)
 #' @export
 #' @examples

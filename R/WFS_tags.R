@@ -1,3 +1,6 @@
+#' @name wfstags
+NULL
+#> NULL
 
 #' Tag functions fg and bg
 #'
@@ -20,12 +23,18 @@
 #' @export
 #' @rdname wfstags
 #' @examples
-#' fg(
+#' xml_clause = fg(
 #'   'PropertyIsLike'
 #'   , bg('PropertyName', 'topp:objec_omschrijf')
 #'   , bg('Literal', '.unmoolen')
 #'   , ta = 'wildCard="*" singleChar="." escape="!"'
+#'   , sep \ "\n"
 #'   )
+#' # cat(xml_clause)
+#' # <PropertyIsLike wildCard="*" singleChar="." escape="!">
+#' # <PropertyName>topp:objec_omschrijf</PropertyName>
+#' # <Literal>.unmoolen</Literal>
+#' # </PropertyIsLike>
 
 fg <- function(tag, ..., ta=NULL, sep=WFS_get_sep()) {
   ta   <- ifelse(is.null(ta),"",glue::glue(" {ta}"))
