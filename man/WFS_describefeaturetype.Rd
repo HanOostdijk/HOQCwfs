@@ -35,9 +35,8 @@ a \code{tibble} with \code{typename} and \code{name} (the fieldnames)
 }
 \description{
 Retrieve and unpack the \code{DescribeFeatureType} document for one or more \code{FeatureTypes} into a tibble.
-}
-\details{
-\code{typename} is copied to the result tibble to distinguish the various \code{FeatureTypes} when more than one is specified
+\code{typename} is copied to the result tibble to distinguish the various \code{FeatureTypes} when more than one is specified.
+Apart from \code{typename} the tibble contains the fields  \code{name}, \code{maxOccurs}, \code{minOccurs} and \code{type} .
 }
 \examples{
 \dontrun{

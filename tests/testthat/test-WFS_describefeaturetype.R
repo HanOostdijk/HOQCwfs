@@ -1,5 +1,4 @@
 test_that("WFS_describefeaturetype checks", {
-  library(HOQCwfs)
   fte      <- 'x y z'
   e        <-tibble::tibble(typename=fte,name='*NOT_FOUND*')
 
@@ -15,7 +14,7 @@ test_that("WFS_describefeaturetype checks", {
   r       <- WFS_describefeaturetype(c(fte,fte),version=version)
   expect_identical(r,rbind(e,e))
   r       <- WFS_describefeaturetype(ftn,version=version)
-  expect_identical(names(r),c('typename','name'))
+  expect_identical(names(r),c("typename", "name", "maxOccurs", "minOccurs", "type" ))
   expect_identical(unique(r$typename),ftn)
   expect_identical(length(grep('*NOT_FOUND*',r$name,fixed = T,ignore.case =F)),0L)
 
@@ -31,7 +30,7 @@ test_that("WFS_describefeaturetype checks", {
   r       <- WFS_describefeaturetype(c(fte,fte),version=version)
   expect_identical(r,rbind(e,e))
   r       <- WFS_describefeaturetype(ftn,version=version)
-  expect_identical(names(r),c('typename','name'))
+  expect_identical(names(r),c("typename", "name", "maxOccurs", "minOccurs", "type" ))
   expect_identical(unique(r$typename),ftn)
   expect_identical(length(grep('*NOT_FOUND*',r$name,fixed = T,ignore.case =F)),0L)
 

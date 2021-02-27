@@ -1,5 +1,3 @@
-library(testthat)
-library(HOQCwfs)
 
 testthat::context("WFS_filter_aux checks")
 
