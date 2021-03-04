@@ -40,24 +40,58 @@ a \code{sf} object with the requested information (the 'id' variable and the geo
 or a character string with an error message
 }
 \description{
-Retrieve the requested information.
+Retrieving the requested geospatial data will most often be done by specifying
+the bounding box of the region of interest or by specifying a filter to restrict
+the features that will be returned. As described in
+\url{https://docs.geoserver.org/latest/en/user/filter/syntax.html}
+there are two ways to specify a filter: with the \code{cql_filter} or the \code{filter} argument. See  \strong{Details} .
 }
 \details{
 Arguments that are recognized by the GetFeature request are:
 \itemize{
 \item \code{bbox        } (not in combination with \code{cql_filter} or \code{filter})
-\item \code{cql_filter  }
-\item \code{filter      }
+\item \code{cql_filter  } a filter derived from the plain-text language mechanism for the OGC Catalog specification.
+See for an introduction the \href{http://docs.geoserver.org/stable/en/user/tutorials/cql/cql_tutorial.html}{tutorial}
+in the \href{https://docs.geoserver.org/stable/en/user/index.html}{GeoServer} webpages. Also see the \strong{Examples}
+\item \code{filter      } an XML-based specification of a filter.
+See this \href{https://docs.geoserver.org/latest/en/user/filter/function.html}{GeoServer page} and the \strong{Examples}.\cr
+And see \link{wfsfilteraux} for functions to build these XML filters
 \item \code{resultType} - default 'results' and alternative 'hits'. In the latter case only the number of matched features (\code{numbeOfFeatures} in 1.1.0 or \code{numberMatched} in 2.0.0) is returned
 \item \code{srsname     } indicate the crs for the coordinates of the output e.g. \code{srsname='EPSG:4326'}
-\item \code{propertyname} the name of the fields to retrieve. The \code{id} and \code{geometry} fields will always be included.
+\item \code{propertyname} the name of the fields to retrieve. The \code{id} and \code{geometry} fields will always be included
 \item \code{startIndex  } number of features to skip before retrieving features ( the output with \code{startindex=1} will start with the second feature )
 \item \code{maxfeatures } (version \verb{1.1.0}) or \code{count} (version \verb{2.0.0}) indicates the number of features to retrieve. When the wrong argument is specified it will be translated in the other.
 The \code{GetFeature} argument \code{outputFormat} has value 'application/json' but this can be overwritten
 }
+
+See vignette for more examples
 }
 \examples{
 \dontrun{
+# examples use the default dataset !
+# retrieve all fields from the first 5 features of "topp:gidw_groenbomen" :
+wfs1     <-  WFS_getfeature("topp:gidw_groenbomen", maxfeatures=5)
 
+# retrieve all fields from all features of "topp:gidw_groenbomen" in the indicated bbox :
+bbox_wgs84 <- "4.860793, 52.313319, 4.861587, 52.316493,EPSG:4326"
+wfs2     <-  WFS_getfeature("topp:gidw_groenbomen", bbox=bbox_wgs84)
+
+# retrieve all fields from all features of "topp:gidw_groenbomen" in the indicated bbox
+# coordinates in bbox given in same crs as the data (EPSG:28992) but we want the output coordinates in WGS84 :
+bbox_28992 <- "119103.4, 480726.0, 119160.1, 481078.7"
+wfs3     <-  WFS_getfeature("topp:gidw_groenbomen", bbox=bbox_28992,srsname='EPSG:4326' )
+
+# filter species with embedded quote (using cql_filter=) :
+a_species    <- r"(Prunus serrulata 'Kanzan')"    # embedded quote
+bm=stringr::str_replace_all(a_species,"'","''")   # double that for cql_filter
+wfs4     <-  WFS_getfeature("topp:gidw_groenbomen",
+           cql_filter= glue::glue("boom_omschrijf='{bm}'") )
+
+# filter species with embedded quote (using filter=) and two of the auxiliary functions :
+f5   <- build_filter(version='1.1.0' ,
+           propeq_xml('topp:boom_omschrijf',a_tree)
+    )
+wfs5 <- WFS_getfeature("topp:gidw_groenbomen", version='1.1.0',
+           filter  = f5)
 }
 }

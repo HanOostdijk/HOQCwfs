@@ -1,7 +1,11 @@
 
 #' Retrieve WFS information with the GetFeature request
 #'
-#' Retrieve the requested information.
+#' Retrieving the requested geospatial data will most often be done by specifying
+#' the bounding box of the region of interest or by specifying a filter to restrict
+#' the features that will be returned. As described in
+#' [https://docs.geoserver.org/latest/en/user/filter/syntax.html](https://docs.geoserver.org/latest/en/user/filter/syntax.html)
+#' there are two ways to specify a filter: with the `cql_filter` or the `filter` argument. See  **Details** .
 #' @param typename Character with the name of a feature (such as e.g. found by using [WFS_featuretypes()] )
 #' @param ... optional arguments for the `GetFeature` request. See **Details**
 #' @param httrType Character with the type of httr request: `GET` or `POST`
@@ -16,18 +20,48 @@
 #' @export
 #' @details Arguments that are recognized by the GetFeature request are:
 #' - `bbox        ` (not in combination with `cql_filter` or `filter`)
-#' - `cql_filter  `
-#' - `filter      `
+#' - `cql_filter  ` a filter derived from the plain-text language mechanism for the OGC Catalog specification.
+#' See for an introduction the [tutorial](http://docs.geoserver.org/stable/en/user/tutorials/cql/cql_tutorial.html)
+#'  in the [GeoServer](https://docs.geoserver.org/stable/en/user/index.html) webpages. Also see the **Examples**
+#' - `filter      ` an XML-based specification of a filter.
+#' See this [GeoServer page](https://docs.geoserver.org/latest/en/user/filter/function.html) and the **Examples**.\cr
+#' And see [wfsfilteraux] for functions to build these XML filters
 #' - `resultType` - default 'results' and alternative 'hits'. In the latter case only the number of matched features (`numbeOfFeatures` in 1.1.0 or `numberMatched` in 2.0.0) is returned
 #' - `srsname     ` indicate the crs for the coordinates of the output e.g. `srsname='EPSG:4326'`
-#' - `propertyname` the name of the fields to retrieve. The `id` and `geometry` fields will always be included.
+#' - `propertyname` the name of the fields to retrieve. The `id` and `geometry` fields will always be included
 #' - `startIndex  ` number of features to skip before retrieving features ( the output with `startindex=1` will start with the second feature )
 #' - `maxfeatures ` (version `1.1.0`) or `count` (version `2.0.0`) indicates the number of features to retrieve. When the wrong argument is specified it will be translated in the other.
 #' The `GetFeature` argument `outputFormat` has value 'application/json' but this can be overwritten
 #'
+#' See vignette for more examples
+#'
 #' @examples
 #' \dontrun{
+#' # examples use the default dataset !
+#' # retrieve all fields from the first 5 features of "topp:gidw_groenbomen" :
+#' wfs1     <-  WFS_getfeature("topp:gidw_groenbomen", maxfeatures=5)
 #'
+#' # retrieve all fields from all features of "topp:gidw_groenbomen" in the indicated bbox :
+#' bbox_wgs84 <- "4.860793, 52.313319, 4.861587, 52.316493,EPSG:4326"
+#' wfs2     <-  WFS_getfeature("topp:gidw_groenbomen", bbox=bbox_wgs84)
+#'
+#' # retrieve all fields from all features of "topp:gidw_groenbomen" in the indicated bbox
+#' # coordinates in bbox given in same crs as the data (EPSG:28992) but we want the output coordinates in WGS84 :
+#' bbox_28992 <- "119103.4, 480726.0, 119160.1, 481078.7"
+#' wfs3     <-  WFS_getfeature("topp:gidw_groenbomen", bbox=bbox_28992,srsname='EPSG:4326' )
+#'
+#' # filter species with embedded quote (using cql_filter=) :
+#' a_species    <- r"(Prunus serrulata 'Kanzan')"    # embedded quote
+#' bm=stringr::str_replace_all(a_species,"'","''")   # double that for cql_filter
+#' wfs4     <-  WFS_getfeature("topp:gidw_groenbomen",
+#'            cql_filter= glue::glue("boom_omschrijf='{bm}'") )
+#'
+#' # filter species with embedded quote (using filter=) and two of the auxiliary functions :
+#' f5   <- build_filter(version='1.1.0' ,
+#'            propeq_xml('topp:boom_omschrijf',a_tree)
+#'     )
+#' wfs5 <- WFS_getfeature("topp:gidw_groenbomen", version='1.1.0',
+#'            filter  = f5)
 #' }
 
 WFS_getfeature <- function(typename, ...,
