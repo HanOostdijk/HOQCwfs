@@ -23,5 +23,6 @@ Imports:
     purrr,
     dplyr,
     magrittr,
-    stringr
+    stringr,
+    sf
 VignetteBuilder: knitr
