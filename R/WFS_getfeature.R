@@ -14,6 +14,7 @@
 #' @param debug Logical indicating the httr response is to be returned
 #' @param to_sf Logical indicating if a `json` object should be converted to an `sf` object
 #' @param sfverbose Logical indicating if [sf::read_sf()] messages will be displayed
+#' @param echo_request Logical indicating if the generated GET or POST request is to be echoed
 #' @param httrverbose Logical vector of up to four entries to be used in [httr::verbose()]
 #' @return a `sf` object with the requested information (the 'id' variable and the geometry will always be included)
 #' or a character string with an error message
@@ -71,6 +72,7 @@ WFS_getfeature <- function(typename, ...,
          debug=F,
          to_sf=T,
          sfverbose=F,
+         echo_request=F,
          httrverbose=rep(F,4)){
     cv <- check_version(version)
     if (!is.null(cv))
@@ -92,6 +94,9 @@ WFS_getfeature <- function(typename, ...,
     if (httrType == "GET") {
       url$query <- build_request_GET(url$query)
       request <- httr::build_url(url)
+      if (echo_request == T) {
+        cat("\n",request,"\n\n")
+      }
       res <- httr_GET_request (
         request,
         debug = debug,
@@ -101,6 +106,9 @@ WFS_getfeature <- function(typename, ...,
       )
     } else {
       request <- build_request_POST(url$query)
+      if (echo_request == T) {
+        cat("\n",request,"\n\n")
+      }
       res <- httr_POST_request (
         base_url,
         request,

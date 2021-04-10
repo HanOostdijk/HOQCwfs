@@ -13,6 +13,7 @@ WFS_getfeature(
   debug = F,
   to_sf = T,
   sfverbose = F,
+  echo_request = F,
   httrverbose = rep(F, 4)
 )
 }
@@ -32,6 +33,8 @@ WFS_getfeature(
 \item{to_sf}{Logical indicating if a \code{json} object should be converted to an \code{sf} object}
 
 \item{sfverbose}{Logical indicating if \code{\link[sf:st_read]{sf::read_sf()}} messages will be displayed}
+
+\item{echo_request}{Logical indicating if the generated GET or POST request is to be echoed}
 
 \item{httrverbose}{Logical vector of up to four entries to be used in \code{\link[httr:verbose]{httr::verbose()}}}
 }
