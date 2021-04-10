@@ -165,7 +165,7 @@ Now that we know the metadata of our resource we can actually retrieve the attri
 - [retrieve a subset](#retrieve-subset) of one of the above: add `maxfeatures=` or `count=` optionally in combination with `startindex=`
 - [retrieve all features in a bounding box](#retrieve_boundingbox)
 - [retrieve features in a bounding box with additional filtering](#retrieve_boundingbox-cqlfilter)
-- sort the features according to a sort key **TODO**
+- [order the features according to a sort key](#order-the-features)
 
 If we are only interested in the [number of features](#number-of-features) that would be returned we can add `resultType=hits` to any of the above. This only returns this number without any other data.
 
@@ -234,44 +234,40 @@ print(wfs4,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
 [[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
-##### retrieve a subset of the query results with `startindex`, `maxfeatures` and `count` and using `verbose` {#retrieve-subset}
-With the `startindex` and `maxfeatures` (1.1.0) or `count` (2.0.0) argument a subset of a query is produced. The `WFS__getfeature` function will use the correct version. By adding the `verbose=T` clause the generated request url will be displayed so that you can verify this. Notice that `startIndex=2` indicates that the first feature to be retrieved is number 3. In other words `startIndex` indicates the number of records to skip.
+##### retrieve a subset of the query results with `startindex`, `maxFeatures` and `count` and using `verbose` {#retrieve-subset}
+With the `startindex` and `maxFeatures` (1.1.0) or `count` (2.0.0) argument a subset of a query is produced. The `WFS__getfeature` function will use the correct version. By adding the `echo_request=T` clause the generated request url will be displayed so that you can verify this: `count` is translated to `maxFeatures` . Notice that `startIndex=2` indicates that the first feature to be retrieved is number 3. In other words `startIndex` indicates the number of records to skip.
 
 ```{r retrieve-subset1,eval=F}
 typename  <- 'topp:gidw_groenbomen'
 tree_name <- "Prunus serrulata ''Kanzan''"  
 tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
 fields    <- 'boom_omschrijf,objec_omschrijf'
-wfs5a     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6,
-                             propertyname=fields,srsName='EPSG:4326'
-                             ,verbose=T,version='1.1.0' )
+wfs5a     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,count=6 
+                             ,propertyname=fields,srsName='EPSG:4326'
+                             ,echo_request=T,version='1.1.0' )
 ```
 ```{r retrieve-subset2,echo=F}
 
 HOQCutil::cap.out({
-wfs5a     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6,
-                             propertyname=fields,srsName='EPSG:4326'
-                             ,verbose=T,version='1.1.0' )  
+wfs5a     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,count=6 
+                             ,propertyname=fields,srsName='EPSG:4326'
+                             ,echo_request=T,version='1.1.0' )  
 }, width=93)
 ```
-```{rretrieve-subset3}
+```{r retrieve-subset3}
 print(wfs5a,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
 
 ```{r retrieve-subset4,eval=F}
-typename  <- 'topp:gidw_groenbomen'
-tree_name <- "Prunus serrulata ''Kanzan''"  
-tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
-fields    <- 'boom_omschrijf,objec_omschrijf'
-wfs5b     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6,
-                             propertyname=fields,srsName='EPSG:4326'
-                             ,verbose=T,version='2.0.0' )
+wfs5b     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6 
+                             ,propertyname=fields,srsName='EPSG:4326'
+                             ,echo_request=T,version='2.0.0' )
 ```
 ```{r retrieve-subset5,echo=F}
 HOQCutil::cap.out({
-wfs5b     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6,
-                             propertyname=fields,srsName='EPSG:4326'
-                             ,verbose=T,version='2.0.0' )
+wfs5b     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatures=6 
+                             ,propertyname=fields,srsName='EPSG:4326'
+                             ,echo_request=T,version='2.0.0' )
 }, width=93)
 ```
 ```{r retrieve-subset6}
@@ -292,17 +288,16 @@ typename  <- 'topp:gidw_groenbomen'
 fields    <- 'boom_omschrijf,objec_omschrijf'
 wfs6a      <-  WFS_getfeature(typename,bbox=bbox_spec,
                              propertyname=fields )
-print(wfs6a,n=5,digits=5)
 
 (bbox_spec <- paste0(glue::glue_collapse(bbox_wgs84,sep=','),',EPSG:4326'))
 wfs6b      <-  WFS_getfeature(typename,bbox=bbox_spec,
                              propertyname=fields )
-print(wfs6b,n=5,digits=5)
+identical(wfs6a,wfs6b)
 ```
 [[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ##### retrieve features in a bounding box with additional filtering {#retrieve_boundingbox-cqlfilter}
-A combination of `cql_filter=` or `filter=` with `bbox=` is not allowed. In that case the bbox filtering has to be included in the `cql_filter=` or `filter=` construct. First we show this for the `cql_filter=` construct.  
+A combination of `cql_filter=` or `filter=` with `bbox=` is not allowed. In that case the bbox filtering has to be included in the `cql_filter=` or `filter=` construct by using the `bbox` function. First we show this for the `cql_filter=` construct for the two CRS cases.   
 Note the quotes around `EPSG:4326` that were not necessary in the `bbox=` case.
 
 ```{r retrieve-boundingbox-cqlfilter}
@@ -311,13 +306,33 @@ fields    <- 'boom_omschrijf,objec_omschrijf'
 tree_name <- "Alnus glutinosa ''Laciniata''"  
 tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
 bbox_spec <- glue::glue_collapse(bbox_28992,sep=',')
-( cql_spec<- paste0(tree_exp,' and bbox(geometrie,',bbox_spec,')') )
+cql_spec<- paste0(tree_exp,' and bbox(geometrie,',bbox_spec,')') 
+```
+```{r eval=F}
+cat("\n",cql_spec,"\n\n")
+```
+```{r echo=F}
+HOQCutil::cap.out({
+cat("\n",cql_spec,"\n\n")
+}, width=93)
+```
+```{r}
 wfs7a      <-  WFS_getfeature(typename,cql_filter=cql_spec,
                              propertyname=fields )
 print(wfs7a,n=5,digits=5)
 
 bbox_spec <- paste0(glue::glue_collapse(bbox_wgs84,sep=','),",'EPSG:4326'")
-( cql_spec<- paste0(tree_exp,' and bbox(geometrie,',bbox_spec,')') )
+cql_spec<- paste0(tree_exp,' and bbox(geometrie,',bbox_spec,')') 
+```
+```{r eval=F}
+cat("\n",cql_spec,"\n\n")
+```
+```{r echo=F}
+HOQCutil::cap.out({
+cat("\n",cql_spec,"\n\n")
+}, width=93)
+```
+```{r}
 wfs7b      <-  WFS_getfeature(typename,cql_filter=cql_spec,
                              propertyname=fields,srsName='EPSG:4326' )
 print(wfs7b,n=5,digits=5)
@@ -360,3 +375,74 @@ print(wfs7d,n=5,digits=5)
 
 [[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
+
+##### order the features according to a sort key {#order-the-features}
+To order features the `SortBy` arguments can be used. My experiences with `Sortby` in combination with filtering are the following:  
+
+- With a `cql_filter` this only works for one argument.
+- For two or more arguments `filter` has to be used in combination with 'POST'
+- `filter` worked as expected for WFS version '2.0.0' 
+- `filter` only works for '1.1.0' when the PropertyName 'boom_omschrijf' is generated in stead of 'topp:boom_omschrijf'
+
+```{r}
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,jaar,objec_omschrijf'
+tree_name <- "Alnus glutinosa ''Laciniata''"  
+tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
+wfs8a      <-  WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,propertyname=fields
+                              ,count=5
+)
+print(wfs8a,n=5,digits=5)
+
+wfs8b      <-  WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar DESC'
+                              ,propertyname=fields
+                              ,count=5
+)
+print(wfs8b,n=5,digits=5)
+
+xml_query1=build_filter(version='2.0.0'
+           , propeq_xml('topp:boom_omschrijf',"Alnus glutinosa 'Laciniata'")
+  )
+
+wfs8c      <-  WFS_getfeature(typename,filter=xml_query1
+                              ,sortby='jaar ASC,objec_omschrijf DESC'
+                              ,httrType = 'POST'
+                              ,count=100
+                              ,propertyname=fields
+                              ,version='2.0.0'
+)
+print(wfs8c,n=5,digits=5)
+
+xml_query2=build_filter(version='1.1.0'
+           , propeq_xml('topp:boom_omschrijf',"Alnus glutinosa 'Laciniata'") 
+  )
+
+wfs8d      <-  WFS_getfeature(typename,filter=xml_query2  # dit werkt niet
+                              ,sortby='jaar ASC,objec_omschrijf DESC'
+                              ,httrType = 'POST'
+                              ,count=100
+                              ,propertyname=fields
+                              ,echo_request = T
+                              ,version='1.1.0'
+)
+wfs8d
+
+xml_query3=build_filter(version='1.1.0'
+           , propeq_xml('boom_omschrijf',"Alnus glutinosa 'Laciniata'") 
+  )
+
+wfs8e      <-  WFS_getfeature(typename,filter=xml_query3  # dit werkt wel
+                              ,sortby='jaar ASC,objec_omschrijf DESC'
+                              ,httrType = 'POST'
+                              ,count=100
+                              ,propertyname=fields
+                              ,version='1.1.0'
+)
+print(wfs8e,n=5,digits=5)
+```
+
+
+[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
