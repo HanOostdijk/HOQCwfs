@@ -235,7 +235,8 @@ print(wfs4,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 [[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ##### retrieve a subset of the query results with `startindex`, `maxFeatures` and `count` and using `verbose` {#retrieve-subset}
-With the `startindex` and `maxFeatures` (1.1.0) or `count` (2.0.0) argument a subset of a query is produced. The `WFS__getfeature` function will use the correct version. By adding the `echo_request=T` clause the generated request url will be displayed so that you can verify this: `count` is translated to `maxFeatures` . Notice that `startIndex=2` indicates that the first feature to be retrieved is number 3. In other words `startIndex` indicates the number of records to skip.
+With the `startindex` and `maxFeatures` (1.1.0) or `count` (2.0.0) argument a subset of a query is produced. The `WFS__getfeature` function will use the correct version. By adding the `echo_request=T` clause the generated request url will be displayed so that you can verify this: `count` is translated to `maxFeatures` . Another way to display the generated url is setting `httrverbose` argument to `FALSE`.  
+Notice that `startIndex=2` indicates that the first feature to be retrieved is number 3. In other words `startIndex` indicates the number of records to skip.
 
 ```{r retrieve-subset1,eval=F}
 typename  <- 'topp:gidw_groenbomen'
@@ -338,7 +339,8 @@ wfs7b      <-  WFS_getfeature(typename,cql_filter=cql_spec,
 print(wfs7b,n=5,digits=5)
 ```
 
-Instead of `cql_filter=` we can also use `filter=` . In that case we have to specify the query in xml terms. To do this we can use the `build_filter` with the `fg` and `bg` functions. In the `xml_query1` filter we specify the filter in the default CRS; when we use it in `wfs7c` we specify that we want the coordinates in longitude/latitude (EPSG:4326). In `xml_query2` and `wfs7d` we do it the other way around.
+Instead of `cql_filter=` we can also use `filter=` . In that case we have to specify the query in xml terms. To do this we can use the `build_filter` with the `fg` and `bg` functions. In the `xml_query1` filter we specify the filter in the default CRS; when we use it in `wfs7c` we specify that we want the coordinates in longitude/latitude (EPSG:4326). In `xml_query2` and `wfs7d` we do it the other way around.  
+Note that `xml_query1` and `xml_query2` are also different because we use version '1.1.0' in the first and '2.0.0' in the second case.
 
 ```{r retrieve-buildfilter}
 xml_query1=build_filter(version='1.1.0',
@@ -380,9 +382,9 @@ print(wfs7d,n=5,digits=5)
 To order features the `SortBy` arguments can be used. My experiences with `Sortby` in combination with filtering are the following:  
 
 - With a `cql_filter` this only works for one argument.
-- For two or more arguments `filter` has to be used in combination with 'POST'
-- `filter` worked as expected for WFS version '2.0.0' 
-- `filter` only works for '1.1.0' when the PropertyName 'boom_omschrijf' is generated in stead of 'topp:boom_omschrijf'
+- For two or more arguments `filter` has to be used 
+
+Firstly we show the use of `cql_filter` for sorting one field: sorting on ascending (`ASC`) or descending (`DESC`) 'jaar' (i.e. 'year').
 
 ```{r}
 typename  <- 'topp:gidw_groenbomen'
@@ -402,11 +404,13 @@ wfs8b      <-  WFS_getfeature(typename,cql_filter=tree_exp
                               ,count=5
 )
 print(wfs8b,n=5,digits=5)
-
+```
+In cases where we have more than one sort field, we have to use `filter`. As an example we use here version '2.0.0' and the 'POST' method, but both versions and methods can be used in any combination.
+```{r}
 xml_query1=build_filter(version='2.0.0'
-           , propeq_xml('topp:boom_omschrijf',"Alnus glutinosa 'Laciniata'")
+           , propeq_xml('boom_omschrijf',"Alnus glutinosa 'Laciniata'")
   )
-
+cat(xml_query1)
 wfs8c      <-  WFS_getfeature(typename,filter=xml_query1
                               ,sortby='jaar ASC,objec_omschrijf DESC'
                               ,httrType = 'POST'
@@ -415,34 +419,28 @@ wfs8c      <-  WFS_getfeature(typename,filter=xml_query1
                               ,version='2.0.0'
 )
 print(wfs8c,n=5,digits=5)
-
-xml_query2=build_filter(version='1.1.0'
-           , propeq_xml('topp:boom_omschrijf',"Alnus glutinosa 'Laciniata'") 
-  )
-
-wfs8d      <-  WFS_getfeature(typename,filter=xml_query2  # dit werkt niet
-                              ,sortby='jaar ASC,objec_omschrijf DESC'
-                              ,httrType = 'POST'
-                              ,count=100
-                              ,propertyname=fields
-                              ,echo_request = T
-                              ,version='1.1.0'
-)
-wfs8d
-
-xml_query3=build_filter(version='1.1.0'
-           , propeq_xml('boom_omschrijf',"Alnus glutinosa 'Laciniata'") 
-  )
-
-wfs8e      <-  WFS_getfeature(typename,filter=xml_query3  # dit werkt wel
-                              ,sortby='jaar ASC,objec_omschrijf DESC'
-                              ,httrType = 'POST'
-                              ,count=100
-                              ,propertyname=fields
-                              ,version='1.1.0'
-)
-print(wfs8e,n=5,digits=5)
 ```
 
-
 [[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+
+### Debugging {#debugging}
+When we retrieve the WFS data successfully, we normally want to end up with an `sf` object.
+We generate a request that is sent with the [httr](https://cran.r-project.org/package=httr) package to the WFS server. The server answers with a response object. We extract the `json` text and convert it to a `json` object with the [jsonlite](https://cran.r-project.org/package=jsonlite) package or directly to an `sf` object with the [sf](https://cran.r-project.org/package=sf) package. In all these steps something can go wrong. 
+
+The `WFS_getfeature` function has some arguments that by default are set to `FALSE` but can be used to get (more) information when something appears to be wrong: 
+
+- [httrverbose](#debugging-httrverbose)
+- [debug](#debugging-debug) 
+- [echo_request](#debugging-echorequest) 
+- [sfverbose](#debugging-sfverbose) 
+
+#### argument httrverbose {#debugging-httrverbose}
+
+#### argument debug {#debugging-debug} 
+
+#### argument echo_request {#debugging-echorequest} 
+
+#### argument sfverbose {#debugging-sfverbose} 
+
+
+[[back to contents]](#TOC)
