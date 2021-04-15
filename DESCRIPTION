@@ -24,5 +24,6 @@ Imports:
     dplyr,
     magrittr,
     stringr,
-    sf
+    sf,
+    HOQCutil (>= 0.1.25)
 VignetteBuilder: knitr

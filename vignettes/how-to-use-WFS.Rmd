@@ -31,7 +31,11 @@ We will start with an example that retrieves trees of a certain species in a cer
 To do this we use the [GetFeature](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getfeature) operation of WFS that is called by the package function `WFS_getfeature`. Assuming we did not do a misspecification the result will be a [simple features]() (`sf`) object. An `sf` object (managed by the R package [sf](https://cran.r-project.org/package=sf)) is a `data.frame` with spatial attributes. Instead of reading the whole data set and doing a filtering on the resulting `data.frame` we can add the filter to the `GetFeature` operation and retrieve only the part that we need. For large files this is obviously more efficient.  
 
 From the contents you can deduce that we introduce the package with a typical use case for the `WFS_getfeature` function ([GetFeature](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getfeature) operation). After that, we show how to find out what can be done with the WFS resource by using the `WFS_getcapabilities` ([GetCapabilities](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#getcapabilities) operation) function to see which 'sub datasets' (`featuretypes`) can be used and with the `WFS_describetype` ([DescribeFeatureType](https://docs.geoserver.org/stable/en/user/services/wfs/reference.html#describefeaturetype) operation) to see which fields a `featuretype` contains.  
-After that we gradually introduce the possibilities to fine-tune the `WFS_getfeature` results.
+After that we gradually introduce the possibilities to fine-tune the `WFS_getfeature` results in the section
+[Retrieve the actual data](#retrieve).  
+The section [Debugging](#debugging) describes some ways to extract more information when a query delivers no result or an unexpected one.  
+The package contains some tools to build spatial queries that are described in the section [Spatial Tools](#spatial-tools) and this vignette ends with some [References](#references) on the internet.
+
 
 ### Introductory example {#intro-example}
 In this first example we combine a text filter with a spatial filter: we want to retrieve some attributes of all trees of the species `Alnus glutinosa 'Laciniata'` in a certain area. So we need the call to `WFS_getfeature` that is done in the lines `#11` and `#12`. I will start by mentioning the arguments that are not specified there:  
@@ -79,7 +83,7 @@ x = HOQCutil::capture.output.both(
 x = purrr::map_chr(x[1:2],URLdecode) 
 HOQCutil::cap.out(cat(x)) 
 ```
-[[back to contents]](#TOC)
+[[back to 'contents']](#TOC)
  
 ### Workflow {#workflow}
 
@@ -110,7 +114,7 @@ The xml document can be written to a local dataset with the `out_path` argument:
 ```{r getcapabilities3,eval=F}
 xmlcap <- WFS_getcapabilities(out_path='mycap.xml') 
 ```
-[[back to contents]](#TOC)
+[[back to 'contents']](#TOC)
  
 #### Look at the various features of the WFS resource {#look-at-features}
 From the GetCapabilities document we can extract the features that are available:
@@ -137,7 +141,7 @@ Note that per featuretype the default Coordinate Reference System is indicated a
 bomen_fields_1_3<- WFS_describefeaturetype(ft2$layer[c(1,3)])
 ```
 
-[[back to contents]](#TOC)
+[[back to 'contents']](#TOC)
 
 #### Look at the data fields of featuretypes {#look-at-data-fields}
 For this we use the function `WFS_describefeaturetype` that executes the WFS `DescribeFeatureType` request. 
@@ -153,7 +157,7 @@ HOQCutil::cap.out(cat(readLines("desc.xml",warn = F),sep='\n'), width=110)
 ```{r unlink, echo=F}
 unlink('desc.xml')
 ```
-[[back to contents]](#TOC)
+[[back to 'contents']](#TOC)
 
 #### Retrieve the actual data {#retrieve}
 Now that we know the metadata of our resource we can actually retrieve the attributes and geometrical data of the features. We do this with `WFS_getfeature` to:  
@@ -165,13 +169,14 @@ Now that we know the metadata of our resource we can actually retrieve the attri
 - [retrieve a subset](#retrieve-subset) of one of the above: add `maxfeatures=` or `count=` optionally in combination with `startindex=`
 - [retrieve all features in a bounding box](#retrieve_boundingbox)
 - [retrieve features in a bounding box with additional filtering](#retrieve_boundingbox-cqlfilter)
+- [retrieve features with a spatial function](#retrieve-spatial-function)
 - [order the features according to a sort key](#order-the-features)
 
 If we are only interested in the [number of features](#number-of-features) that would be returned we can add `resultType=hits` to any of the above. This only returns this number without any other data.
 
 In the following sections we will give some examples.
 
-[[back to contents]](#TOC) 
+[[back to 'contents']](#TOC) 
 
 ##### retrieve all features with all attributes and the geometry {#retrieve-all}
 ```{r retrieve-all1}
@@ -181,7 +186,7 @@ class(wfs1)
 print(wfs1,n=5) # show only first 5 features
 ```
 
-[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+[[back to 'contents']](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ##### retrieve some features {#retrieve-some-features}
 For non-complex queries the `cql_filter` can be used. The features for the tree `Prunus serrulata 'Kanzan'` can be queried with the following code. The number of quotes in a query is often confusing (for me at least): here a set of quotes is needed because `boom_omschrijf` is a character field and quotes around 'Kanzan' have to be duplicated. 
@@ -194,7 +199,7 @@ print(tree_exp)
 wfs2      <-  WFS_getfeature(typename,cql_filter=tree_exp )
 print(wfs2,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
-[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+[[back to 'contents']](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ##### retrieve some attributes  {#retrieve-attributes}
 When we are only interested in the 'omschrijvingen' (descriptions) fields we can add the `propertyname` argument to request the fields `boom_omschrijf` and `objec_omschrijf`. Note that the `id` and `geometry` fields are always included.
@@ -207,7 +212,7 @@ fields    <- 'boom_omschrijf,objec_omschrijf'
 wfs3      <-  WFS_getfeature(typename,cql_filter=tree_exp,propertyname=fields )
 print(wfs3,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
-[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+[[back to 'contents']](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ##### retrieve the number of results {#number-of-features}
 If we want to know beforehand the number of features that a query would return we can add the `resultType=hits` argument:
@@ -219,7 +224,7 @@ tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
 fields    <- 'boom_omschrijf,objec_omschrijf'
   WFS_getfeature(typename,cql_filter=tree_exp,propertyname=fields,resultType='hits' )
 ```
-[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+[[back to 'contents']](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ##### change the Spatial Reference System  {#change-crs}
 In the output of the previous examples we saw that the coordinates in the geometry were denoted in the Coordinate Reference System (CRS) that is used in the Netherlands: 'Amersfoort / RD New' also known as 'EPSG:28992'. If we want to have these coordinates denoted in the more commonly used 'WGS 84' (EPSG:4326) in terms of longitude and latitude we can add the `srsName` argument. SRS ([Spatial Reference System](https://en.wikipedia.org/wiki/Spatial_reference_system)) is a synonym for CRS.
@@ -232,7 +237,7 @@ fields    <- 'boom_omschrijf,objec_omschrijf'
 wfs4      <-  WFS_getfeature(typename,cql_filter=tree_exp,propertyname=fields,srsName='EPSG:4326' )
 print(wfs4,n=5,digits=5) # show only first 5 features, 5 digits in geometry
 ```
-[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+[[back to 'contents']](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ##### retrieve a subset of the query results with `startindex`, `maxFeatures` and `count` and using `verbose` {#retrieve-subset}
 With the `startindex` and `maxFeatures` (1.1.0) or `count` (2.0.0) argument a subset of a query is produced. The `WFS__getfeature` function will use the correct version. By adding the `echo_request=T` clause the generated request url will be displayed so that you can verify this: `count` is translated to `maxFeatures` . Another way to display the generated url is setting `httrverbose` argument to `FALSE`.  
@@ -274,7 +279,7 @@ wfs5b     <-  WFS_getfeature(typename,cql_filter=tree_exp,startIndex=2,maxfeatur
 ```{r retrieve-subset6}
 identical(wfs5a,wfs5b)
 ```
-[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+[[back to 'contents']](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ##### retrieve features in a bounding box {#retrieve_boundingbox}
 When you want to retrieve all features in a bounding box the `bbox=` argument can be used. When specifying the coordinates of the bounding box it is assumed that the default CRS is used.
@@ -295,7 +300,7 @@ wfs6b      <-  WFS_getfeature(typename,bbox=bbox_spec,
                              propertyname=fields )
 identical(wfs6a,wfs6b)
 ```
-[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+[[back to 'contents']](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ##### retrieve features in a bounding box with additional filtering {#retrieve_boundingbox-cqlfilter}
 A combination of `cql_filter=` or `filter=` with `bbox=` is not allowed. In that case the bbox filtering has to be included in the `cql_filter=` or `filter=` construct by using the `bbox` function. First we show this for the `cql_filter=` construct for the two CRS cases.   
@@ -375,7 +380,41 @@ print(wfs7d,n=5,digits=5)
 
 ```
 
-[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+[[back to 'contents']](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+
+
+##### retrieve features with a spatial function {#retrieve-spatial-function}
+
+```{r}
+version   <- '1.1.0'
+coords    <- c(119103.4, 480726.0)
+my_point  <- sf::st_sfc(sf::st_point(coords),crs='EPSG:28992')
+print(my_point)
+my_coords <- sf::st_coordinates(my_point)[,c('X','Y')]
+print(my_coords)
+xml_query <- build_filter(version=version,
+     spat_xml('geometrie'
+              ,spat_feature('point','EPSG:28992',my_coords) 
+              ,spat_fun='DWithin'
+              ,50)
+  )
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
+wfs7e     <-  WFS_getfeature(typename
+             ,version=version                
+             ,filter=xml_query
+             ,propertyname=fields)
+```
+```{r eval=F}
+sf::st_distance(wfs7e,my_point,by_element=T)
+```
+```{r echo=F}
+HOQCutil::cap.out({
+sf::st_distance(wfs7e,my_point,by_element=T)
+}, width=95)
+```
+
+[[back to 'contents']](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 
 ##### order the features according to a sort key {#order-the-features}
@@ -421,7 +460,7 @@ wfs8c      <-  WFS_getfeature(typename,filter=xml_query1
 print(wfs8c,n=5,digits=5)
 ```
 
-[[back to contents]](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
+[[back to 'contents']](#TOC) [[back to 'Retrieve the actual data']](#retrieve)
 
 ### Debugging {#debugging}
 When we retrieve the WFS data successfully, we normally want to end up with an `sf` object.
@@ -430,17 +469,203 @@ We generate a request that is sent with the [httr](https://cran.r-project.org/pa
 The `WFS_getfeature` function has some arguments that by default are set to `FALSE` but can be used to get (more) information when something appears to be wrong: 
 
 - [httrverbose](#debugging-httrverbose)
-- [debug](#debugging-debug) 
 - [echo_request](#debugging-echorequest) 
+- [debug](#debugging-debug) 
 - [sfverbose](#debugging-sfverbose) 
 
 #### argument httrverbose {#debugging-httrverbose}
+The logical values in argument `httrverbose` are passed to [httr::verbose](https://rdrr.io/cran/httr/man/verbose.html) so that information about the connection between server and client can be returned . With the default value (`FALSE`) no such information is returned but specifying `c(TRUE,TRUE,TRUE,TRUE)` delivers [more information](https://rdrr.io/cran/httr/man/verbose.html). 
 
-#### argument debug {#debugging-debug} 
+```{r}
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,jaar,objec_omschrijf'
+tree_name <- "Alnus glutinosa ''Laciniata''"  
+tree_exp  <- glue::glue("boom_omschrijf='{tree_name}'")
+```
+```{r eval=F}
+wfs8a      <-  WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,propertyname=fields
+                              ,httrverbose = c(T,T,T,T) # <--- 
+                              ,count=2
+)
+```
+```{r echo=F}
+HOQCutil::cap.out({
+wfs8a      <-  WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,propertyname=fields
+                              ,httrverbose = c(T,T,T,T) # <--- 
+                              ,count=2
+  )
+}, width=93)
+```
+
+[[back to 'contents']](#TOC) [[back to 'Debugging']](#debugging)
 
 #### argument echo_request {#debugging-echorequest} 
+If we want to see the request that is generated (when we have reason to think that it could be incorrect, as often we did when building the package) then we can set the `echo_request` argument to `TRUE`. The examples below show the difference between the request for the `GET` and the `POST` methods:
+
+```{r eval=F}
+wfs8b      <-  WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,httrType = 'GET'
+                              ,propertyname=fields
+                              ,echo_request = T # <--- 
+                              ,count=2
+)
+```
+```{r echo=F}
+HOQCutil::cap.out({
+wfs8b      <-  WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,httrType = 'GET'
+                              ,propertyname=fields
+                              ,echo_request = T # <--- 
+                              ,count=2
+  )
+}, width=93)
+```
+
+```{r eval=F}
+wfs8c      <-  WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,httrType = 'POST'
+                              ,propertyname=fields
+                              ,echo_request = T # <--- 
+                              ,count=2
+)
+```
+```{r echo=F}
+HOQCutil::cap.out({
+wfs8c      <-  WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,httrType = 'POST'
+                              ,propertyname=fields
+                              ,echo_request = T # <--- 
+                              ,count=2
+  )
+}, width=93)
+```
+
+[[back to 'contents']](#TOC) [[back to 'Debugging']](#debugging)
+
+#### argument debug {#debugging-debug} 
+By setting the `debug` argument to `TRUE` only the 'response object' of the `httr` request will be returned. When everthing works out fine the response object will be converted to a `json` or `sf` object. When this conversion does not succeed, it may be worthwhile to study the response object.   
+The first example shows that the package sometimes will handle an error by providing an error message.
+In this telling us that it can not convert the string `'two'` to the number `2` :  
+
+```{r }
+wfs8d <- WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,propertyname=fields
+                              ,count= 'two'
+  )
+```
+```{r eval=F} 
+ cat(wfs8d) 
+```
+```{r echo=F}
+HOQCutil::cap.out({
+ cat(wfs8d)
+}, width=93)
+```
+If this is not the case we can study the response object as in the following example where we display the structure of the object, see that it is not an html error (because the response objects reports a message `"Success: (200) OK"` ) and by viewing the text we see that the WFS server returns an XML ExceptionReport.
+
+```{r }
+wfs8e <- WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,debug=T  # <--- 
+                              ,propertyname=fields
+                              ,count= 'two'
+  )
+```
+```{r eval=F} 
+ str(wfs8e) 
+```
+```{r echo=F}
+HOQCutil::cap.out({
+ str(wfs8e)
+}, width=93)
+```
+
+```{r eval=F}
+ httr::http_error(wfs8e) 
+```
+```{r echo=F}
+HOQCutil::cap.out({
+ httr::http_error(wfs8e) 
+}, width=93)
+```
+```{r eval=F}
+ httr::http_status(wfs8e)$message 
+```
+```{r echo=F}
+HOQCutil::cap.out({
+ httr::http_status(wfs8e)$message 
+}, width=93)
+```
+```{r eval=F}
+ httr::headers(wfs8e)$`content-type`  
+```
+```{r echo=F}
+HOQCutil::cap.out({
+ httr::headers(wfs8e)$`content-type`  
+}, width=93)
+```
+```{r eval=F}
+ httr::content(wfs8e, encoding = 'UTF-8', as  =  'text')
+```
+```{r echo=F}
+HOQCutil::cap.out({
+ httr::content(wfs8e, encoding = 'UTF-8', as  =  'text')
+}, width=93)
+```
+
+
+[[back to 'contents']](#TOC) [[back to 'Debugging']](#debugging)
 
 #### argument sfverbose {#debugging-sfverbose} 
+Setting the argument `sfverbose` to `TRUE` shows the message that the package `sf` produces when converting the response object to an `sf` object. 
+
+```{r eval=F}
+wfs8f <- WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,sfverbose = T  # <--- 
+                              ,propertyname=fields
+                              ,count= 2
+  )
+```
+```{r echo=F}
+HOQCutil::cap.out({
+wfs8f <- WFS_getfeature(typename,cql_filter=tree_exp
+                              ,sortby='jaar ASC'
+                              ,sfverbose = T  # <--- 
+                              ,propertyname=fields
+                              ,count= 2
+  )
+}, width=93)
+```
+
+[[back to 'contents']](#TOC) [[back to 'Debugging']](#debugging)
+
+### Spatial Tools {#spatial-tools}
+In this section we describe some tools (functions) that can be useful when formulating spatial queries. Even when it is often possible to download the whole data set and filter the resulting `sf` object with [dplyr](https://cran.r-project.org/package=dplyr) (in case of a query of the attributes) or [sf](https://cran.r-project.org/package=sf) (in case of a query on the geometry) it is more efficient to let this be handled by the WFS server. 
+
+[[back to 'contents']](#TOC)
+
+### References {#references}
+
+- [Web Feature Service](http://www.opengeospatial.org/standards/wfs) from the [Open Geospatial Consortium (OGC) ](https://www.ogc.org/) with the [Web Feature Service Implementation Specification 1.1.0](https://portal.ogc.org/files/?artifact_id=8339) and [OGC® Web Feature Service 2.0 Interface Standard – With Corrigendum](http://docs.opengeospatial.org/is/09-025r2/09-025r2.html)
+- [GeoServer documentation](https://docs.geoserver.org/) with 
+[GeoServer WFS Reference](https://docs.geoserver.org/latest/en/user/services/wfs/reference.html),
+[GeoServer Tutorial](https://docs.geoserver.org/stable/en/user/tutorials/cql/cql_tutorial.html) and  
+[GeoServer filtering manual](https://docs.geoserver.org/stable/en/user/filter/index.html) 
+- examples of use of the WFS API without using the `HOQCwfs` package:
+  - [WFS data importeren in R met behulp van GeoJSON (in Dutch)](https://twiav.nl/nl/WFS_R.php). Note that the default output format requested in `HOQCwfs` is `application/json` that is converted to an `sf` object 
+  - [WFS spatial filtering](https://www.linz.govt.nz/data/linz-data-service/guides-and-documentation/wfs-spatial-filtering): the documentation page from 'Land Information New Zealand (LINZ)'
+  - [Communicating with a WFS service in a web browser](https://enterprise.arcgis.com/en/server/latest/publish-services/windows/communicating-with-a-wfs-service-in-a-web-browser.htm): documentation describing WFS support in 'ArcGIS Enterprise' but also useful outside the ArcGIS environment
+
+[[back to 'contents']](#TOC)
 
 
-[[back to contents]](#TOC)
