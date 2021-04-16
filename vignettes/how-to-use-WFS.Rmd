@@ -23,7 +23,7 @@ library(HOQCwfs)
 
 ### Introduction {#introduction}
 This package contains functions to retrieve information from a [Web Feature Service](https://en.wikipedia.org/wiki/Web_Feature_Service) (WFS) resource. 
-The [Open Geospatial Consortium](http://www.opengeospatial.org/) WFS  Interface Standard provides an interface allowing requests for geographical features across the web using platform-independent calls. This package generates such calls in the form of HTML requests in [GET or POST](https://www.w3schools.com/tags/ref_httpmethods.asp) format. Such a request is normally invisible to the user but can be made visible by adding `httrverbose=T` to the function call. 
+The [Open Geospatial Consortium](http://www.opengeospatial.org/) WFS  Interface Standard provides an interface allowing requests for geographical features across the web using platform-independent calls. This package generates such calls in the form of HTML requests in [GET or POST](https://www.w3schools.com/tags/ref_httpmethods.asp) format. Such a request is normally invisible to the user but can be made visible by adding `httrverbose=T` to the function call. See [Debugging](#debugging) for details.  
 
 In this vignette we use a WFS data source that contains information about the trees in the municipality where I live. Apart from the name of the species each record also contains the exact location of the tree.
 
@@ -34,7 +34,7 @@ From the contents you can deduce that we introduce the package with a typical us
 After that we gradually introduce the possibilities to fine-tune the `WFS_getfeature` results in the section
 [Retrieve the actual data](#retrieve).  
 The section [Debugging](#debugging) describes some ways to extract more information when a query delivers no result or an unexpected one.  
-The package contains some tools to build spatial queries that are described in the section [Spatial Tools](#spatial-tools) and this vignette ends with some [References](#references) on the internet.
+The package contains some tools to build spatial queries that are described in the section [Spatial Tools](#spatial-tools) and this vignette ends with some [References](#references) to resources on the internet.
 
 
 ### Introductory example {#intro-example}
@@ -384,6 +384,13 @@ print(wfs7d,n=5,digits=5)
 
 
 ##### retrieve features with a spatial function {#retrieve-spatial-function}
+There are number of operators in WFS that can be used to `filter` spatial features.
+As an example in this section we show how to filter the features within a distance of 50 meters from a given point using the R functions `build_filter`, `spat_xml` and `spat_feature` and WFS operator `DWithin`.  
+At the end of the example we use the `sf::st_distance` to check if the distance of the filtered features to the point is indeed less or equal to 50 meters.  
+
+The `spat_xml` function also works for the WFS operators `Disjoint`, `Equals`, `DWithin`, `Beyond`, `Intersects`, `Touches`, `Crosses`, `Within`, `Contains`, `Overlaps` and `BBOX` but in those cases the `distance` and `units` arguments are not used.
+
+See [Spatial Tools](#spatial-tools) for more information about constructing filter queries.
 
 ```{r}
 version   <- '1.1.0'
@@ -396,7 +403,8 @@ xml_query <- build_filter(version=version,
      spat_xml('geometrie'
               ,spat_feature('point','EPSG:28992',my_coords) 
               ,spat_fun='DWithin'
-              ,50)
+              ,distance=50
+              ,units='meters')
   )
 typename  <- 'topp:gidw_groenbomen'
 fields    <- 'boom_omschrijf,objec_omschrijf'
@@ -650,7 +658,37 @@ wfs8f <- WFS_getfeature(typename,cql_filter=tree_exp
 [[back to 'contents']](#TOC) [[back to 'Debugging']](#debugging)
 
 ### Spatial Tools {#spatial-tools}
-In this section we describe some tools (functions) that can be useful when formulating spatial queries. Even when it is often possible to download the whole data set and filter the resulting `sf` object with [dplyr](https://cran.r-project.org/package=dplyr) (in case of a query of the attributes) or [sf](https://cran.r-project.org/package=sf) (in case of a query on the geometry) it is more efficient to let this be handled by the WFS server. 
+In this section we describe some tools (functions) that can be useful when formulating spatial queries. Even when it is often possible to download the whole data set and filter the resulting `sf` object with [dplyr](https://cran.r-project.org/package=dplyr) (in case of a query of the attributes) or [sf](https://cran.r-project.org/package=sf) (in case of a query on the geometry) it is more efficient to have this handled by the WFS server.  
+Spatial filters can  be specified by both the `cql_filter` and `filter` argument. My preference is to use the `filter` option because I think that the resulting xml code is better structured.
+In the section [retrieve features with a spatial function](#retrieve-spatial-function) we gave already a simple example of a spatial query. 
+
+#### Basic query blocks {#basic-query-blocks}
+The function `build_filter` (often using the functions `fg` and `bg`) is used to create a filter. An example of a retrieval of a type of Alnus trees within a given bounding box
+
+```{r}
+bbox_28992 <- c(119103, 480726, 119160, 481078)
+f1 <- build_filter(version='1.1.0',
+    fg("And"
+        , propeq_xml('topp:boom_omschrijf',"Alnus glutinosa 'Laciniata'")
+        , bbox_xml("geometrie","EPSG:28992",bbox_28992)
+      )
+   )
+cat(f1)
+```
+The `build_filter` function temporarily sets the default version to the one specified (here `1.1.0`) and creates a filter with the `xmlns` definitions for this version. The inner functions( here `propeq_xml` and `bbox_xml`) will use the same version if not overruled.  
+The function `fg` accepts a 'tag' as first argument and optionally attributes for the starting tag (`ta`) and one or more `fg` or `bg` constructs as in the following example. And end tag is automatically appended. The function `bg` is simpler version of `fg`: no tag attributes and only a tag with its value (see the 'Literal' tag).
+
+```{r}
+xml_phrase = fg(
+   'PropertyIsLike'
+   , bg('PropertyName', 'topp:objec_omschrijf')
+   , bg('Literal', '.unmoolen')
+   , ta = 'wildCard="*" singleChar="." escape="!"'
+   , sep = "\n"
+   )
+cat(xml_phrase)
+```
+
 
 [[back to 'contents']](#TOC)
 

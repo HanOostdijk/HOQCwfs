@@ -26,7 +26,7 @@ NULL
 #' @rdname wfsfilteraux
 #' @examples
 #' bbox_28992 <- c(119103, 480726, 119160, 481078)
-#' f1 <- build_filter(version='1.0.0',
+#' f1 <- build_filter(version='1.1.0',
 #'    fg("And"
 #'        , propeq_xml('topp:boom_omschrijf',"Alnus glutinosa 'Laciniata'")
 #'        , bbox_xml("geometrie","EPSG:28992",bbox_28992)

@@ -28,7 +28,7 @@ NULL
 #'   , bg('PropertyName', 'topp:objec_omschrijf')
 #'   , bg('Literal', '.unmoolen')
 #'   , ta = 'wildCard="*" singleChar="." escape="!"'
-#'   , sep \ "\n"
+#'   , sep = "\n"
 #'   )
 #' # cat(xml_clause)
 #' # <PropertyIsLike wildCard="*" singleChar="." escape="!">
