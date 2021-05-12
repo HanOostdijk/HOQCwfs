@@ -65,7 +65,4 @@ f2 <- build_filter(version='2.0.0',
      )
   )
 pn_construct <- propertyname_xml('han','2.0.0',nopref =F)
-bbox_28992 <- c(119103, 480726, 119160, 481078)
-bbox_4326  <- convert_bbox(bbox_28992,"EPSG:28992","EPSG:4326")
-points_4326 <- convert_points(bbox_28992,"EPSG:28992","EPSG:4326")
 }

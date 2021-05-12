@@ -23,11 +23,12 @@ or numeric matrix with two columns (for \code{convert_points} )}
 \item{keep_names}{Logical indicating that the output of \code{convert_points} keeps the column names when the input is a matrix}
 }
 \value{
-The \code{convert_bbox} returns a numeric vector and the  \code{convert_points} returns a numeric matrix with two columns
+The \code{convert_bbox} returns a numeric vector of class \code{bbox} and the  \code{convert_points} returns a numeric matrix
+with two columns (if \code{outmatrix == FALSE} a vector is returned)
 }
 \description{
 \itemize{
-\item The function \code{convert_bbox} converts a bbox from one CRS to another
+\item The function \code{convert_bbox} converts (the coordinates of) a bbox from one CRS to another
 \item The function \code{convert_points} converts a set of points (in vector or matrix form) from one CRS to another
 }
 }

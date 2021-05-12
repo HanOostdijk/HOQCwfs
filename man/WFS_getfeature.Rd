@@ -18,11 +18,11 @@ WFS_getfeature(
 )
 }
 \arguments{
-\item{typename}{Character with the name of a feature (such as e.g. found by using \code{\link[=WFS_featuretypes]{WFS_featuretypes()}} )}
+\item{typename}{Character string with the name of a feature (such as e.g. found by using \code{\link[=WFS_featuretypes]{WFS_featuretypes()}} )}
 
 \item{...}{optional arguments for the \code{GetFeature} request. See \strong{Details}}
 
-\item{httrType}{Character with the type of httr request: \code{GET} or \code{POST}}
+\item{httrType}{Character string with the type of httr request: \code{GET} or \code{POST}}
 
 \item{url}{URL of the WFS service. See \code{\link[=WFS_get_url]{WFS_get_url()}} for the default}
 

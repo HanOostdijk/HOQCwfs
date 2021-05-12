@@ -663,6 +663,8 @@ Spatial filters can  be specified by both the `cql_filter` and `filter` argument
 In the section [retrieve features with a spatial function](#retrieve-spatial-function) we gave already a simple example of a spatial query. 
 
 #### Basic query blocks {#basic-query-blocks}
+
+##### Functions `build_filter` , `fg` and `bg`
 The function `build_filter` (often using the functions `fg` and `bg`) is used to create a filter. An example of a retrieval of a type of Alnus trees within a given bounding box
 
 ```{r}
@@ -689,6 +691,129 @@ xml_phrase = fg(
 cat(xml_phrase)
 ```
 
+##### Functions `propertyname_xml`, `propeq_xml` and `bbox_xml` 
+
+- `propertyname_xml` generates a propertyname construct. See the examples below.
+- `propeq_xml` generates a 'property is equal' construct. See the example in [](##basic-query-blocks)
+- `bbox_xml` generates a `bbox` construct. Again see the example in [](##basic-query-blocks)
+
+```{r}
+(propertyname_xml('han','2.0.0'))
+(propertyname_xml('han','1.1.0',nopref =F))
+(propertyname_xml('han','1.1.0',nopref =T))
+```
+
+##### Function `spat_feature` to define a spatial feature
+In [retrieve features with a spatial function](#retrieve-spatial-function) a example with `spat_feature` was already given. The  `spat_feature` function defines a spatial component in `xml` terms that corresponds to an `sf` object: `sf::st_point`, `sf::st_linestring`, `sf::st_polygon`, `sf::st_multipoint`, `sf::st_multilinestring`, `sf::st_multipolygon` or`sf::st_bbox` (for `Envelope`) . After showing how to define each of these object types we give another example of usage:
+
+```{r}
+# Envelope (bbox)
+coords_wgs84 <- c( 4.86, 52.31,  4.867, 52.316)
+coords       <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992",out_matrix=F)
+cat(spat_feature('Envelope','EPSG:28992',coords,version='1.1.0'),'\n')  
+cat(spat_feature('Envelope','EPSG:28992',coords,version='2.0.0'),'\n')  
+
+# Point
+coords    <- c(119103.4, 480726.0)
+cat(spat_feature('Point','EPSG:28992',coords,version='1.1.0'),'\n') 
+cat(spat_feature('Point','EPSG:28992',coords,version='2.0.0'),'\n')   
+
+# LineString
+coords_wgs84 <- c( 4.86, 52.31, 4.86, 52.316, 4.867, 52.316)
+coords       <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992")
+cat(spat_feature('LineString','EPSG:28992',coords,version='1.1.0'),'\n')
+cat(spat_feature('LineString','EPSG:28992',coords,version='2.0.0'),'\n')
+
+# Polygon without a hole
+coords_wgs84 <- c( 4.86, 52.31, 4.86, 52.316, 4.867, 52.316, 4.86, 52.31)
+coords       <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992")
+cat(spat_feature('Polygon','EPSG:28992',list(coords),version='1.1.0'),'\n')
+cat(spat_feature('Polygon','EPSG:28992',list(coords),version='2.0.0'),'\n')
+
+# Polygon with a hole
+out_wgs84    <- c( 4.86, 52.31, 4.86, 52.316, 4.88, 52.316, 4.88, 52.31, 4.86, 52.31)
+out_28992    <- convert_points(out_wgs84,"EPSG:4326","EPSG:28992")
+in_wgs84    <- c( 4.87, 52.312, 4.87, 52.314, 4.875, 52.314, 4.875, 52.312, 4.87, 52.312)
+in_28992    <- convert_points(in_wgs84,"EPSG:4326","EPSG:28992")
+cat(spat_feature('Polygon','EPSG:28992',list(out_28992,in_28992),version='1.1.0'),'\n')
+cat(spat_feature('Polygon','EPSG:28992',list(out_28992,in_28992),version='2.0.0'),'\n')
+
+# Multipoint
+coords_wgs84 <- c( 4.86, 52.31, 4.86, 52.316, 4.88, 52.316)
+coords_28992 <- convert_points(coords_wgs84,"EPSG:4326","EPSG:28992") 
+cat(spat_feature('Multipoint','EPSG:28992',coords_28992,version='1.1.0'),'\n')
+cat(spat_feature('Multipoint','EPSG:28992',coords_28992,version='2.0.0'),'\n')
+
+# MultiLineString
+coords_wgs84a <- c( 4.86, 52.31, 4.86, 52.316, 4.88, 52.316)
+coords_28992a <- convert_points(coords_wgs84a,"EPSG:4326","EPSG:28992")
+coords_wgs84b <- c( 4.87, 52.31, 4.87, 52.306, 4.89, 52.316)
+coords_28992b <- convert_points(coords_wgs84b,"EPSG:4326","EPSG:28992")
+coords_28992 <- list(coords_28992a,coords_28992b)
+cat(spat_feature('MultiLineString','EPSG:28992',coords_28992,version='1.1.0'),'\n')
+cat(spat_feature('MultiLineString','EPSG:28992',coords_28992,version='2.0.0'),'\n')
+
+# MultiPolygon (with hole)
+out_wgs84    <- c( 4.86, 52.31, 4.86, 52.316, 4.88, 52.316, 4.88, 52.31, 4.86, 52.31)
+out_28992    <- convert_points(out_wgs84,"EPSG:4326","EPSG:28992")
+in_wgs84    <- c( 4.87, 52.312, 4.87, 52.314, 4.875, 52.314, 4.875, 52.312, 4.87, 52.312)
+in_28992    <- convert_points(in_wgs84,"EPSG:4326","EPSG:28992")
+
+pol1 <- list(out_28992,in_28992) # first polygon (with hole)
+
+out_wgs84    <-  c( 4.86, 52.30, 4.86, 52.306, 4.88, 52.306, 4.88, 52.30, 4.86, 52.30)
+out_28992    <- convert_points(out_wgs84,"EPSG:4326","EPSG:28992")
+
+pol2 <- list(out_28992)         # second polygon (without hole)
+
+mpol1 <- list(pol1,pol2)        # multipolygon
+
+cat(spat_feature('MultiPolygon','EPSG:28992',mpol1,version='1.1.0'),'\n')
+cat(spat_feature('MultiPolygon','EPSG:28992',mpol1,version='2.0.0'),'\n')
+```
+In the readme of this package a filter is used that determines all features that lie in an area with the exception of those that lie in a certain part of the area. In this case the spatial area is a polygon with a hole. This shows the use of the `spat_feature` function in context:
+
+```{r}
+# define outer en inner rectangle in WGS 84 coordinates
+out_wgs84 <- c( 4.86,  52.31,  4.86, 52.316, 4.88,  52.316, 
+                 4.88,  52.31,  4.86, 52.31)
+in_wgs84  <- c( 4.87,  52.312, 4.87, 52.314, 4.875, 52.314, 
+                 4.875, 52.312, 4.87, 52.312)
+# convert coordinates form WGS84 (EPSG:4326) to the Dutch CRS EPSG:28992
+out_28992 <- convert_points(out_wgs84,"EPSG:4326","EPSG:28992")
+in_28992  <- convert_points(in_wgs84,"EPSG:4326","EPSG:28992")
+
+# define the filter that selects all points that intersect the rectangle with hole
+# use EPSG:28992 because that is the default CRS for this WFS server (data set)
+xml_query <- build_filter(version='1.1.0',
+     spat_xml('geometrie',
+              spat_feature('Polygon','EPSG:28992',list(out_28992,in_28992)),
+              spat_fun='Intersects')
+  )
+# set WFS server (not necessary here because this is the default)
+WFS_set_url("https://geoweb.amstelveen.nl/geoserver/topp/wfs")
+# set typename (dataset) and attributes that will be retrieved
+typename  <- 'topp:gidw_groenbomen'
+fields    <- 'boom_omschrijf,objec_omschrijf'
+# retrieve the data from the WFS server using the filter
+wfs1      <-  WFS_getfeature(typename
+             ,filter=xml_query
+             ,propertyname=fields)
+# show number of trees and attributes
+dim(wfs1)
+# show only the first two features
+head(wfs1,2)
+```
+
+#### Utility functions `convert_points` and `convert_bbox` {#utility-functions}
+The functions`convert_bbox` and `convert_points` convert  (the coordinates of) a bbox or a set of points from one CRS to another. 
+
+```{r}
+bbox_28992 <- c(119103, 480726, 119160, 481078)
+convert_bbox(bbox_28992,"EPSG:28992","EPSG:4326")
+convert_points(bbox_28992,"EPSG:28992","EPSG:4326")
+convert_points(bbox_28992,"EPSG:28992","EPSG:4326",out_matrix = F)
+```
 
 [[back to 'contents']](#TOC)
 

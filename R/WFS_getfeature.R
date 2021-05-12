@@ -6,9 +6,9 @@
 #' the features that will be returned. As described in
 #' [https://docs.geoserver.org/latest/en/user/filter/syntax.html](https://docs.geoserver.org/latest/en/user/filter/syntax.html)
 #' there are two ways to specify a filter: with the `cql_filter` or the `filter` argument. See  **Details** .
-#' @param typename Character with the name of a feature (such as e.g. found by using [WFS_featuretypes()] )
+#' @param typename Character string with the name of a feature (such as e.g. found by using [WFS_featuretypes()] )
 #' @param ... optional arguments for the `GetFeature` request. See **Details**
-#' @param httrType Character with the type of httr request: `GET` or `POST`
+#' @param httrType Character string with the type of httr request: `GET` or `POST`
 #' @param url URL of the WFS service. See [WFS_get_url()] for the default
 #' @param version software version for WFS service request. See [WFS_get_version()] for the default
 #' @param debug Logical indicating the httr response is to be returned

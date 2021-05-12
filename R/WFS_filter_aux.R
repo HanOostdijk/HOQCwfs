@@ -40,9 +40,6 @@ NULL
 #'      )
 #'   )
 #' pn_construct <- propertyname_xml('han','2.0.0',nopref =F)
-#' bbox_28992 <- c(119103, 480726, 119160, 481078)
-#' bbox_4326  <- convert_bbox(bbox_28992,"EPSG:28992","EPSG:4326")
-#' points_4326 <- convert_points(bbox_28992,"EPSG:28992","EPSG:4326")
 
 build_filter <- function (..., version=WFS_get_version(),sep=WFS_get_sep()) {
   if (! (version %in% c('1.1.0','2.0.0') ) )
@@ -191,7 +188,7 @@ bbox_xml <- function (gemprop, crs_in, coords, version = WFS_get_version()) {
 
    sptype1 <- tolower(sptype)
    if (sptype1 == 'envelope') {
-     fg2 = create_envelope(coords, version)
+     fg2 = create_envelope(coords, version, sep = sep)
      fg1 = fg("gml:Envelope"
        , fg2
        , ta = glue::glue('srsName = "{crs_in}"')
@@ -244,7 +241,7 @@ bbox_xml <- function (gemprop, crs_in, coords, version = WFS_get_version()) {
    fg1
  }
 
- create_envelope <- function (coords, version) {
+ create_envelope <- function (coords, version, sep) {
    if (version == '1.1.0') {
      paste(fg('gml:coord'
               , bg('gml:X', coords[1])
@@ -257,12 +254,14 @@ bbox_xml <- function (gemprop, crs_in, coords, version = WFS_get_version()) {
            collapse = '')
    } else {
      paste(bg('gml:lowerCorner'
-              , mat2char(coords[1:2], sep = ' '))
+              , mat2char(coords[1:2], sep = ' ' ))
+           ,
+           sep
            ,
            bg('gml:upperCorner'
-              , mat2char(coords[3:4], sep = ' '))
+              , mat2char(coords[3:4], sep = ' ' ))
            ,
-           collapse = '')
+           sep='', collapse = '')
    }
  }
 
